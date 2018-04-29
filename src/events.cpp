@@ -112,6 +112,8 @@ bool Events::load()
 				info.playerOnLoseExperience = event;
 			} else if (methodName == "onGainSkillTries") {
 				info.playerOnGainSkillTries = event;
+			} else if (methodName == "onSpeak") {
+				info.playerOnSpeak = event;
 			} else {
 				std::cout << "[Warning - Events::load] Unknown player method: " << methodName << std::endl;
 			}
@@ -782,6 +784,48 @@ void Events::eventPlayerOnGainSkillTries(Player* player, skills_t skill, uint64_
 		LuaScriptInterface::reportError(nullptr, LuaScriptInterface::popString(L));
 	} else {
 		tries = LuaScriptInterface::getNumber<uint64_t>(L, -1);
+		lua_pop(L, 1);
+	}
+
+	scriptInterface.resetScriptEnv();
+}
+
+
+void Events::eventPlayerOnSpeak(Player* player, Player* receiver, const std::string& message, uint16_t channelId)
+{
+	// Player:onSpeak(receiver, message, channelId)
+	if (info.playerOnSpeak == -1) {
+		return;
+	}
+
+	if (!scriptInterface.reserveScriptEnv()) {
+		std::cout << "[Error - Events::eventPlayerOnSpeak] Call stack overflow" << std::endl;
+		return;
+	}
+
+	ScriptEnvironment* env = scriptInterface.getScriptEnv();
+	env->setScriptId(info.playerOnSpeak, &scriptInterface);
+
+	lua_State* L = scriptInterface.getLuaState();
+	scriptInterface.pushFunction(info.playerOnSpeak);
+
+	LuaScriptInterface::pushUserdata<Player>(L, player);
+	LuaScriptInterface::setMetatable(L, -1, "Player");
+
+	if (receiver) {
+		LuaScriptInterface::pushUserdata<Player>(L, receiver);
+		LuaScriptInterface::setMetatable(L, -1, "Player");
+	} else {
+		lua_pushnil(L);
+	}
+
+	LuaScriptInterface::pushString(L, message);
+
+	lua_pushnumber(L, channelId);
+
+	if (scriptInterface.protectedCall(L, 4, 1) != 0) {
+		LuaScriptInterface::reportError(nullptr, LuaScriptInterface::popString(L));
+	} else {
 		lua_pop(L, 1);
 	}
 

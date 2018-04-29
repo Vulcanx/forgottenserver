@@ -3352,6 +3352,7 @@ void Game::playerSay(uint32_t playerId, uint16_t channelId, SpeakClasses type,
 		default:
 			break;
 	}
+	g_events->eventPlayerOnSpeak(player, getPlayerByName(receiver), text, channelId);
 }
 
 bool Game::playerSaySpell(Player* player, SpeakClasses type, const std::string& text)
