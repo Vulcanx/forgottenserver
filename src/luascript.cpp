@@ -1556,6 +1556,12 @@ void LuaScriptInterface::registerFunctions()
 	registerEnum(SKILL_MAGLEVEL)
 	registerEnum(SKILL_LEVEL)
 
+	registerEnum(BONUS_MAGICDAMAGE)
+	registerEnum(BONUS_MAGICRESISTANCE)
+	registerEnum(BONUS_TOTALMANA)
+	registerEnum(BONUS_FIRST)
+	registerEnum(BONUS_LAST)
+
 	registerEnum(SKULL_NONE)
 	registerEnum(SKULL_YELLOW)
 	registerEnum(SKULL_GREEN)
@@ -2236,6 +2242,9 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod("Player", "getSkillPercent", LuaScriptInterface::luaPlayerGetSkillPercent);
 	registerMethod("Player", "getSkillTries", LuaScriptInterface::luaPlayerGetSkillTries);
 	registerMethod("Player", "addSkillTries", LuaScriptInterface::luaPlayerAddSkillTries);
+
+	registerMethod("Player", "setBonus", LuaScriptInterface::luaPlayerSetBonus);
+	registerMethod("Player", "getBonus", LuaScriptInterface::luaPlayerGetBonus);
 
 	registerMethod("Player", "addOfflineTrainingTime", LuaScriptInterface::luaPlayerAddOfflineTrainingTime);
 	registerMethod("Player", "getOfflineTrainingTime", LuaScriptInterface::luaPlayerGetOfflineTrainingTime);
@@ -8045,6 +8054,34 @@ int LuaScriptInterface::luaPlayerAddSkillTries(lua_State* L)
 		uint64_t tries = getNumber<uint64_t>(L, 3);
 		player->addSkillAdvance(skillType, tries);
 		pushBoolean(L, true);
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int LuaScriptInterface::luaPlayerSetBonus(lua_State* L)
+{
+	// player:setBonus(bonusType, value)
+	Player* player = getUserdata<Player>(L, 1);
+	if (player) {
+		PlayerBonuses_t bonusType = getNumber<PlayerBonuses_t>(L, 2);
+		uint16_t value = getNumber<uint16_t>(L, 3);
+		player->setBonus(bonusType, value);
+		pushBoolean(L, true);
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int LuaScriptInterface::luaPlayerGetBonus(lua_State* L)
+{
+	// player:getBonus(bonusType)
+	Player* player = getUserdata<Player>(L, 1);
+	if (player) {
+		PlayerBonuses_t bonusType = getNumber<PlayerBonuses_t>(L, 2);
+		lua_pushnumber(L, player->getBonus(bonusType));
 	} else {
 		lua_pushnil(L);
 	}

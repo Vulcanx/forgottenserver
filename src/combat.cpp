@@ -492,6 +492,44 @@ void Combat::CombatHealthFunc(Creature* caster, Creature* target, const CombatPa
 		return;
 	}
 
+	auto isMagicDamage = [damage](){
+		switch (damage.primary.type) {
+			case COMBAT_FIREDAMAGE:
+			case COMBAT_EARTHDAMAGE:
+			case COMBAT_DEATHDAMAGE:
+			case COMBAT_DROWNDAMAGE:
+			case COMBAT_ENERGYDAMAGE:
+			case COMBAT_ICEDAMAGE:
+			case COMBAT_HOLYDAMAGE:
+				return true;
+			default:
+				return false;
+		}
+	};
+
+	if (isMagicDamage()) {
+		Player* casterPlayer = caster->getPlayer();
+		Player* targetPlayer = target->getPlayer();
+		if (casterPlayer) {
+			uint16_t magicDamage = casterPlayer->getBonus(BONUS_MAGICDAMAGE);
+			if (magicDamage > 0) {
+				damage.primary.value += damage.primary.value * (magicDamage / 100.);
+				damage.secondary.value += damage.secondary.value * (magicDamage / 100.);
+			}
+		}
+		if (targetPlayer) {
+			uint16_t magicResist = targetPlayer->getBonus(BONUS_MAGICRESISTANCE);
+			if (magicResist > 0) {
+				if (damage.primary.value < 0) {
+					damage.primary.value -= damage.primary.value * (magicResist / 100.);
+				}
+				if (damage.secondary.value < 0) {
+					damage.secondary.value -= damage.secondary.value * (magicResist / 100.);
+				}
+			}
+		}
+	}
+
 	if ((damage.primary.value < 0 || damage.secondary.value < 0) && caster) {
 		Player* targetPlayer = target->getPlayer();
 		if (targetPlayer && caster->getPlayer() && targetPlayer->getSkull() != SKULL_BLACK) {
@@ -513,6 +551,44 @@ void Combat::CombatManaFunc(Creature* caster, Creature* target, const CombatPara
 	if (damageCopy.primary.value < 0) {
 		if (caster && caster->getPlayer() && target->getPlayer()) {
 			damageCopy.primary.value /= 2;
+		}
+	}
+
+	auto isMagicDamage = [damageCopy](){
+		switch (damageCopy.primary.type) {
+			case COMBAT_FIREDAMAGE:
+			case COMBAT_EARTHDAMAGE:
+			case COMBAT_DEATHDAMAGE:
+			case COMBAT_DROWNDAMAGE:
+			case COMBAT_ENERGYDAMAGE:
+			case COMBAT_ICEDAMAGE:
+			case COMBAT_HOLYDAMAGE:
+				return true;
+			default:
+				return false;
+		}
+	};
+
+	if (isMagicDamage()) {
+		Player* casterPlayer = caster->getPlayer();
+		Player* targetPlayer = target->getPlayer();
+		if (casterPlayer) {
+			uint16_t magicDamage = casterPlayer->getBonus(BONUS_MAGICDAMAGE);
+			if (magicDamage > 0) {
+				damageCopy.primary.value += damageCopy.primary.value * (magicDamage / 100.);
+				damageCopy.secondary.value += damageCopy.secondary.value * (magicDamage / 100.);
+			}
+		}
+		if (targetPlayer) {
+			uint16_t magicResist = targetPlayer->getBonus(BONUS_MAGICRESISTANCE);
+			if (magicResist > 0) {
+				if (damageCopy.primary.value < 0) {
+					damageCopy.primary.value -= damageCopy.primary.value * (magicResist / 100.);
+				}
+				if (damageCopy.secondary.value < 0) {
+					damageCopy.secondary.value -= damageCopy.secondary.value * (magicResist / 100.);
+				}
+			}
 		}
 	}
 

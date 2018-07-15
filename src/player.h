@@ -490,6 +490,22 @@ class Player final : public Creature, public Cylinder
 			inventoryAbilities[slot] = enabled;
 		}
 
+		void setBonus(PlayerBonuses_t bonus, uint16_t value) {
+			bonuses[bonus] = value;
+			switch (bonus) {
+				case BONUS_TOTALMANA:
+					uint32_t originalMana = manaMax - manaMaxBonus;
+					manaMaxBonus = originalMana * (value / 100.);
+					manaMax = originalMana + manaMaxBonus;
+					mana = std::min<uint32_t>(mana, manaMax);
+					sendStats();
+			}
+		}
+
+		uint16_t getBonus(PlayerBonuses_t bonus) {
+			return bonuses[bonus];
+		}
+
 		void setVarSkill(skills_t skill, int32_t modifier) {
 			varSkills[skill] += modifier;
 		}
@@ -1211,6 +1227,7 @@ class Player final : public Creature, public Cylinder
 		std::string guildNick;
 
 		Skill skills[SKILL_LAST + 1];
+		uint16_t bonuses[BONUS_LAST + 1] = {};
 		LightInfo itemsLight;
 		Position loginPosition;
 		Position lastWalkthroughPosition;
@@ -1266,6 +1283,7 @@ class Player final : public Creature, public Cylinder
 		uint32_t editListId = 0;
 		uint32_t mana = 0;
 		uint32_t manaMax = 0;
+		uint32_t manaMaxBonus = 0;
 		int32_t varSkills[SKILL_LAST + 1] = {};
 		int32_t varSpecialSkills[SPECIALSKILL_LAST + 1] = {};
 		int32_t varStats[STAT_LAST + 1] = {};
