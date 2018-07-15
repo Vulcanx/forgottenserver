@@ -507,25 +507,25 @@ void Combat::CombatHealthFunc(Creature* caster, Creature* target, const CombatPa
 		}
 	};
 
-	if (isMagicDamage()) {
-		Player* casterPlayer = caster->getPlayer();
-		Player* targetPlayer = target->getPlayer();
-		if (casterPlayer) {
-			uint16_t magicDamage = casterPlayer->getBonus(BONUS_MAGICDAMAGE);
-			if (magicDamage > 0) {
-				damage.primary.value += damage.primary.value * (magicDamage / 100.);
-				damage.secondary.value += damage.secondary.value * (magicDamage / 100.);
-			}
+	Player* casterPlayer = caster->getPlayer();
+	Player* targetPlayer = target->getPlayer();
+	if (casterPlayer) {
+		PlayerBonuses_t bonus = isMagicDamage() ? BONUS_MAGICDAMAGE : BONUS_PHYSICALDAMAGE;
+		uint16_t damageBonus = casterPlayer->getBonus(bonus);
+		if (damageBonus > 0) {
+			damage.primary.value += damage.primary.value * (damageBonus / 100.);
+			damage.secondary.value += damage.secondary.value * (damageBonus / 100.);
 		}
-		if (targetPlayer) {
-			uint16_t magicResist = targetPlayer->getBonus(BONUS_MAGICRESISTANCE);
-			if (magicResist > 0) {
-				if (damage.primary.value < 0) {
-					damage.primary.value -= damage.primary.value * (magicResist / 100.);
-				}
-				if (damage.secondary.value < 0) {
-					damage.secondary.value -= damage.secondary.value * (magicResist / 100.);
-				}
+	}
+	if (targetPlayer) {
+		PlayerBonuses_t bonus = isMagicDamage() ? BONUS_MAGICRESISTANCE : BONUS_PHYSICALRESISTANCE;
+		uint16_t resistBonus = casterPlayer->getBonus(bonus);
+		if (resistBonus > 0) {
+			if (damage.primary.value < 0) {
+				damage.primary.value -= damage.primary.value * (resistBonus / 100.);
+			}
+			if (damage.secondary.value < 0) {
+				damage.secondary.value -= damage.secondary.value * (resistBonus / 100.);
 			}
 		}
 	}
@@ -569,25 +569,25 @@ void Combat::CombatManaFunc(Creature* caster, Creature* target, const CombatPara
 		}
 	};
 
-	if (isMagicDamage()) {
-		Player* casterPlayer = caster->getPlayer();
-		Player* targetPlayer = target->getPlayer();
-		if (casterPlayer) {
-			uint16_t magicDamage = casterPlayer->getBonus(BONUS_MAGICDAMAGE);
-			if (magicDamage > 0) {
-				damageCopy.primary.value += damageCopy.primary.value * (magicDamage / 100.);
-				damageCopy.secondary.value += damageCopy.secondary.value * (magicDamage / 100.);
-			}
+	Player* casterPlayer = caster->getPlayer();
+	Player* targetPlayer = target->getPlayer();
+	if (casterPlayer) {
+		PlayerBonuses_t bonus = isMagicDamage() ? BONUS_MAGICDAMAGE : BONUS_PHYSICALDAMAGE;
+		uint16_t damageBonus = casterPlayer->getBonus(bonus);
+		if (damageBonus > 0) {
+			damageCopy.primary.value += damageCopy.primary.value * (damageBonus / 100.);
+			damageCopy.secondary.value += damageCopy.secondary.value * (damageBonus / 100.);
 		}
-		if (targetPlayer) {
-			uint16_t magicResist = targetPlayer->getBonus(BONUS_MAGICRESISTANCE);
-			if (magicResist > 0) {
-				if (damageCopy.primary.value < 0) {
-					damageCopy.primary.value -= damageCopy.primary.value * (magicResist / 100.);
-				}
-				if (damageCopy.secondary.value < 0) {
-					damageCopy.secondary.value -= damageCopy.secondary.value * (magicResist / 100.);
-				}
+	}
+	if (targetPlayer) {
+		PlayerBonuses_t bonus = isMagicDamage() ? BONUS_MAGICRESISTANCE : BONUS_PHYSICALRESISTANCE;
+		uint16_t resistBonus = casterPlayer->getBonus(bonus);
+		if (resistBonus > 0) {
+			if (damageCopy.primary.value < 0) {
+				damageCopy.primary.value -= damageCopy.primary.value * (resistBonus / 100.);
+			}
+			if (damageCopy.secondary.value < 0) {
+				damageCopy.secondary.value -= damageCopy.secondary.value * (resistBonus / 100.);
 			}
 		}
 	}

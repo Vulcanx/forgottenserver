@@ -493,12 +493,24 @@ class Player final : public Creature, public Cylinder
 		void setBonus(PlayerBonuses_t bonus, uint16_t value) {
 			bonuses[bonus] = value;
 			switch (bonus) {
-				case BONUS_TOTALMANA:
+				case BONUS_TOTALHEALTH: {
+					uint32_t originalHealth = healthMax - healthMaxBonus;
+					healthMaxBonus = originalHealth * (value / 100.);
+					healthMax = originalHealth + healthMaxBonus;
+					health = std::min<uint32_t>(health, healthMax);
+					sendStats();
+					break;
+				};
+				case BONUS_TOTALMANA: {
 					uint32_t originalMana = manaMax - manaMaxBonus;
 					manaMaxBonus = originalMana * (value / 100.);
 					manaMax = originalMana + manaMaxBonus;
 					mana = std::min<uint32_t>(mana, manaMax);
 					sendStats();
+					break;
+				};
+				default:
+					break;
 			}
 		}
 
@@ -1284,6 +1296,7 @@ class Player final : public Creature, public Cylinder
 		uint32_t mana = 0;
 		uint32_t manaMax = 0;
 		uint32_t manaMaxBonus = 0;
+		uint32_t healthMaxBonus = 0;
 		int32_t varSkills[SKILL_LAST + 1] = {};
 		int32_t varSpecialSkills[SPECIALSKILL_LAST + 1] = {};
 		int32_t varStats[STAT_LAST + 1] = {};
