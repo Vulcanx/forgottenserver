@@ -1027,8 +1027,23 @@ void Monster::pushItems(Tile* tile)
 		uint32_t removeCount = 0;
 
 		int32_t downItemSize = tile->getDownItemCount();
+		const int32_t blockedaids[] = {4444};
+		constexpr int32_t size = sizeof(blockedaids) / sizeof(int32_t);
 		for (int32_t i = downItemSize; --i >= 0;) {
 			Item* item = items->at(i);
+			if (item) {
+				int32_t aid = item->getActionId();
+				bool doContinue = false;
+				for (int32_t index = 0; index < size; index++) {
+					if (blockedaids[index] == aid) {
+						doContinue = true;
+						break;
+					}
+				}
+				if (doContinue) {
+					continue;
+				}
+			}
 			if (item && item->hasProperty(CONST_PROP_MOVEABLE) && (item->hasProperty(CONST_PROP_BLOCKPATH)
 			        || item->hasProperty(CONST_PROP_BLOCKSOLID))) {
 				if (moveCount < 20 && Monster::pushItem(item)) {
