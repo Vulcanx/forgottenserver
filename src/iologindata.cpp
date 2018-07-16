@@ -678,9 +678,6 @@ bool IOLoginData::savePlayer(Player* player)
 	query << "`manaspent` = " << player->manaSpent << ',';
 	query << "`soul` = " << static_cast<uint16_t>(player->soul) << ',';
 	query << "`town_id` = " << player->town->getID() << ',';
-	query << "`magic_damage` = " << player->getBonus(BONUS_MAGICDAMAGE) << ',';
-	query << "`magic_resistance` = " << player->getBonus(BONUS_MAGICRESISTANCE) << ',';
-	query << "`total_mana` = " << player->getBonus(BONUS_TOTALMANA) << ',';
 
 	const Position& loginPosition = player->getLoginPosition();
 	query << "`posx` = " << loginPosition.getX() << ',';
