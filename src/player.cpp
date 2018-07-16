@@ -489,6 +489,31 @@ void Player::addSkillAdvance(skills_t skill, uint64_t count)
 	}
 }
 
+void Player::setBonus(PlayerBonuses_t bonus, uint16_t value) {
+	bonuses[bonus] = value;
+	switch (bonus) {
+		case BONUS_TOTALHEALTH: {
+			uint32_t originalHealth = healthMax - healthMaxBonus;
+			healthMaxBonus = originalHealth * (value / 100.);
+			healthMax = originalHealth + healthMaxBonus;
+			health = std::min<uint32_t>(health, healthMax);
+			g_game.addCreatureHealth(this);
+			sendStats();
+			break;
+		};
+		case BONUS_TOTALMANA: {
+			uint32_t originalMana = manaMax - manaMaxBonus;
+			manaMaxBonus = originalMana * (value / 100.);
+			manaMax = originalMana + manaMaxBonus;
+			mana = std::min<uint32_t>(mana, manaMax);
+			sendStats();
+			break;
+		};
+		default:
+			break;
+	}
+}
+
 void Player::setVarStats(stats_t stat, int32_t modifier)
 {
 	varStats[stat] += modifier;

@@ -664,7 +664,7 @@ bool IOLoginData::savePlayer(Player* player)
 	query << "`group_id` = " << player->group->id << ',';
 	query << "`vocation` = " << player->getVocationId() << ',';
 	query << "`health` = " << player->health << ',';
-	query << "`healthmax` = " << player->healthMax << ',';
+	query << "`healthmax` = " << player->healthMax - player->healthMaxBonus << ',';
 	query << "`experience` = " << player->experience << ',';
 	query << "`lookbody` = " << static_cast<uint32_t>(player->defaultOutfit.lookBody) << ',';
 	query << "`lookfeet` = " << static_cast<uint32_t>(player->defaultOutfit.lookFeet) << ',';

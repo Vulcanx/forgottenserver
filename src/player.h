@@ -490,29 +490,7 @@ class Player final : public Creature, public Cylinder
 			inventoryAbilities[slot] = enabled;
 		}
 
-		void setBonus(PlayerBonuses_t bonus, uint16_t value) {
-			bonuses[bonus] = value;
-			switch (bonus) {
-				case BONUS_TOTALHEALTH: {
-					uint32_t originalHealth = healthMax - healthMaxBonus;
-					healthMaxBonus = originalHealth * (value / 100.);
-					healthMax = originalHealth + healthMaxBonus;
-					health = std::min<uint32_t>(health, healthMax);
-					sendStats();
-					break;
-				};
-				case BONUS_TOTALMANA: {
-					uint32_t originalMana = manaMax - manaMaxBonus;
-					manaMaxBonus = originalMana * (value / 100.);
-					manaMax = originalMana + manaMaxBonus;
-					mana = std::min<uint32_t>(mana, manaMax);
-					sendStats();
-					break;
-				};
-				default:
-					break;
-			}
-		}
+		void setBonus(PlayerBonuses_t bonus, uint16_t value);
 
 		uint16_t getBonus(PlayerBonuses_t bonus) {
 			return bonuses[bonus];
