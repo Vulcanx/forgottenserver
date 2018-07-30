@@ -620,6 +620,9 @@ bool Monster::isTarget(const Creature* creature) const
 
 bool Monster::selectTarget(Creature* creature)
 {
+	if (mType->info.ignoreTargets) {
+		return false;
+	}
 	if (!isTarget(creature)) {
 		return false;
 	}
@@ -1098,6 +1101,9 @@ void Monster::pushCreatures(Tile* tile)
 
 bool Monster::getNextStep(Direction& direction, uint32_t& flags)
 {
+	if (mType->info.idle) {
+		return false;
+	}
 	if (isIdle || getHealth() <= 0) {
 		//we dont have anyone watching might aswell stop walking
 		eventWalk = 0;

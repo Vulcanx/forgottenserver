@@ -738,6 +738,10 @@ MonsterType* Monsters::loadMonster(const std::string& file, const std::string& m
 				mType->info.isConvinceable = attr.as_bool();
 			} else if (strcasecmp(attrName, "pushable") == 0) {
 				mType->info.pushable = attr.as_bool();
+			} else if (strcasecmp(attrName, "ignoretargets") == 0) {
+				mType->info.ignoreTargets = attr.as_bool();
+			} else if (strcasecmp(attrName, "idle") == 0) {
+				mType->info.idle = attr.as_bool();
 			} else if (strcasecmp(attrName, "canpushitems") == 0) {
 				mType->info.canPushItems = attr.as_bool();
 			} else if (strcasecmp(attrName, "canpushcreatures") == 0) {
