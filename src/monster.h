@@ -103,6 +103,9 @@ class Monster final : public Creature
 		bool isAttackable() const override {
 			return mType->info.isAttackable;
 		}
+		bool isWalkthroughable() const {
+			return mType->info.walkthroughable;
+		}
 
 		bool canPushItems() const {
 			return mType->info.canPushItems;

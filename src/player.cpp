@@ -698,6 +698,13 @@ bool Player::canWalkthrough(const Creature* creature) const
 		return true;
 	}
 
+	const Monster* monster = creature->getMonster();
+	if (monster) {
+		if (monster->isWalkthroughable()) {
+			return true;
+		}
+	}
+
 	const Player* player = creature->getPlayer();
 	if (!player) {
 		return false;
@@ -732,6 +739,13 @@ bool Player::canWalkthroughEx(const Creature* creature) const
 {
 	if (group->access) {
 		return true;
+	}
+
+	const Monster* monster = creature->getMonster();
+	if (monster) {
+		if (monster->isWalkthroughable()) {
+			return true;
+		}
 	}
 
 	const Player* player = creature->getPlayer();

@@ -742,6 +742,8 @@ MonsterType* Monsters::loadMonster(const std::string& file, const std::string& m
 				mType->info.canPushItems = attr.as_bool();
 			} else if (strcasecmp(attrName, "canpushcreatures") == 0) {
 				mType->info.canPushCreatures = attr.as_bool();
+			} else if (strcasecmp(attrName, "walkthroughable") == 0) {
+				mType->info.walkthroughable = attr.as_bool();
 			} else if (strcasecmp(attrName, "staticattack") == 0) {
 				uint32_t staticAttack = pugi::cast<uint32_t>(attr.value());
 				if (staticAttack > 100) {
