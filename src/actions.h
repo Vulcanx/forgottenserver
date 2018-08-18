@@ -48,6 +48,8 @@ class Action : public Event
 
 		ActionFunction function;
 
+		bool ignoreDefaultExhaust;
+
 	private:
 		std::string getScriptEventName() const override;
 

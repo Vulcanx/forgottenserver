@@ -362,11 +362,14 @@ bool Actions::useItem(Player* player, const Position& pos, uint8_t index, Item* 
 bool Actions::useItemEx(Player* player, const Position& fromPos, const Position& toPos,
                         uint8_t toStackPos, Item* item, bool isHotkey, Creature* creature/* = nullptr*/)
 {
-	player->setNextAction(OTSYS_TIME() + g_config.getNumber(ConfigManager::EX_ACTIONS_DELAY_INTERVAL));
 	player->stopWalk();
 
 	Action* action = getAction(item);
-	if (!action) {
+	if (action) {
+		if (!action->ignoreDefaultExhaust) {
+			player->setNextAction(OTSYS_TIME() + g_config.getNumber(ConfigManager::EX_ACTIONS_DELAY_INTERVAL));
+		}
+	} else {
 		player->sendCancelMessage(RETURNVALUE_CANNOTUSETHISOBJECT);
 		return false;
 	}
@@ -423,6 +426,11 @@ bool Action::configureEvent(const pugi::xml_node& node)
 	pugi::xml_attribute checkFloorAttr = node.attribute("checkfloor");
 	if (checkFloorAttr) {
 		checkFloor = checkFloorAttr.as_bool();
+	}
+
+	pugi::xml_attribute ignoreDefaultExhaust = node.attribute("ignoredefaultexhaust");
+	if (ignoreDefaultExhaust) {
+		ignoreDefaultExhaust = ignoreDefaultExhaust.as_bool();
 	}
 
 	return true;
