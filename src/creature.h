@@ -220,10 +220,10 @@ class Creature : virtual public Thing
 			return baseSpeed;
 		}
 
-		int32_t getHealth() const {
+		int64_t getHealth() const {
 			return health;
 		}
-		virtual int32_t getMaxHealth() const {
+		virtual int64_t getMaxHealth() const {
 			return healthMax;
 		}
 
@@ -267,7 +267,7 @@ class Creature : virtual public Thing
 			return attackedCreature;
 		}
 		virtual bool setAttackedCreature(Creature* creature);
-		virtual BlockType_t blockHit(Creature* attacker, CombatType_t combatType, int32_t& damage,
+		virtual BlockType_t blockHit(Creature* attacker, CombatType_t combatType, int64_t& damage,
 		                             bool checkDefense = false, bool checkArmor = false, bool field = false);
 
 		bool setMaster(Creature* newMaster);
@@ -333,10 +333,10 @@ class Creature : virtual public Thing
 			return true;
 		}
 
-		virtual void changeHealth(int32_t healthChange, bool sendHealthChange = true);
+		virtual void changeHealth(int64_t healthChange, bool sendHealthChange = true);
 
-		void gainHealth(Creature* healer, int32_t healthGain);
-		virtual void drainHealth(Creature* attacker, int32_t damage);
+		void gainHealth(Creature* healer, int64_t healthGain);
+		virtual void drainHealth(Creature* attacker, int64_t damage);
 
 		virtual bool challengeCreature(Creature*) {
 			return false;
@@ -344,7 +344,7 @@ class Creature : virtual public Thing
 
 		void onDeath();
 		virtual uint64_t getGainedExperience(Creature* attacker) const;
-		void addDamagePoints(Creature* attacker, int32_t damagePoints);
+		void addDamagePoints(Creature* attacker, int64_t damagePoints);
 		bool hasBeenAttacked(uint32_t attackerId);
 
 		//combat event functions
@@ -355,8 +355,8 @@ class Creature : virtual public Thing
 		virtual void onCombatRemoveCondition(Condition* condition);
 		virtual void onAttackedCreature(Creature*) {}
 		virtual void onAttacked();
-		virtual void onAttackedCreatureDrainHealth(Creature* target, int32_t points);
-		virtual void onTargetCreatureGainHealth(Creature*, int32_t) {}
+		virtual void onAttackedCreatureDrainHealth(Creature* target, int64_t points);
+		virtual void onTargetCreatureGainHealth(Creature*, int64_t) {}
 		virtual bool onKilledCreature(Creature* target, bool lastHit = true);
 		virtual void onGainExperience(uint64_t gainExp, Creature* target);
 		virtual void onAttackedCreatureBlockHit(BlockType_t) {}
@@ -500,8 +500,8 @@ class Creature : virtual public Thing
 		uint32_t lastStepCost = 1;
 		uint32_t baseSpeed = 220;
 		int32_t varSpeed = 0;
-		int32_t health = 1000;
-		int32_t healthMax = 1000;
+		int64_t health = 1000;
+		int64_t healthMax = 1000;
 
 		Outfit_t currentOutfit;
 		Outfit_t defaultOutfit;

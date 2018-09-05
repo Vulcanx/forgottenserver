@@ -749,7 +749,7 @@ Item* Creature::getCorpse(Creature*, Creature*)
 	return Item::CreateItem(getLookCorpse());
 }
 
-void Creature::changeHealth(int32_t healthChange, bool sendHealthChange/* = true*/)
+void Creature::changeHealth(int64_t healthChange, bool sendHealthChange/* = true*/)
 {
 	int32_t oldHealth = health;
 
@@ -764,7 +764,7 @@ void Creature::changeHealth(int32_t healthChange, bool sendHealthChange/* = true
 	}
 }
 
-void Creature::gainHealth(Creature* healer, int32_t healthGain)
+void Creature::gainHealth(Creature* healer, int64_t healthGain)
 {
 	changeHealth(healthGain);
 	if (healer) {
@@ -772,7 +772,7 @@ void Creature::gainHealth(Creature* healer, int32_t healthGain)
 	}
 }
 
-void Creature::drainHealth(Creature* attacker, int32_t damage)
+void Creature::drainHealth(Creature* attacker, int64_t damage)
 {
 	changeHealth(-damage, false);
 
@@ -781,7 +781,7 @@ void Creature::drainHealth(Creature* attacker, int32_t damage)
 	}
 }
 
-BlockType_t Creature::blockHit(Creature* attacker, CombatType_t combatType, int32_t& damage,
+BlockType_t Creature::blockHit(Creature* attacker, CombatType_t combatType, int64_t& damage,
                                bool checkDefense /* = false */, bool checkArmor /* = false */, bool /* field  = false */)
 {
 	BlockType_t blockType = BLOCK_NONE;
@@ -969,7 +969,7 @@ uint64_t Creature::getGainedExperience(Creature* attacker) const
 	return std::floor(getDamageRatio(attacker) * getLostExperience());
 }
 
-void Creature::addDamagePoints(Creature* attacker, int32_t damagePoints)
+void Creature::addDamagePoints(Creature* attacker, int64_t damagePoints)
 {
 	if (damagePoints <= 0) {
 		return;
@@ -1057,7 +1057,7 @@ void Creature::onAttacked()
 	//
 }
 
-void Creature::onAttackedCreatureDrainHealth(Creature* target, int32_t points)
+void Creature::onAttackedCreatureDrainHealth(Creature* target, int64_t points)
 {
 	target->addDamagePoints(this, points);
 }
