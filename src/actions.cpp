@@ -27,6 +27,8 @@
 #include "pugicast.h"
 #include "spells.h"
 
+#include <boost/algorithm/string.hpp>
+
 extern Game g_game;
 extern Spells* g_spells;
 extern Actions* g_actions;
@@ -81,13 +83,25 @@ bool Actions::registerEvent(Event_ptr event, const pugi::xml_node& node)
 
 	pugi::xml_attribute attr;
 	if ((attr = node.attribute("itemid"))) {
-		uint16_t id = pugi::cast<uint16_t>(attr.value());
-
-		auto result = useItemMap.emplace(id, std::move(*action));
-		if (!result.second) {
-			std::cout << "[Warning - Actions::registerEvent] Duplicate registered item with id: " << id << std::endl;
+		std::string ids = pugi::cast<std::string>(attr.value());
+		std::vector<std::string> id_list;
+		boost::split(id_list, ids, boost::is_any_of(";"));
+		if (id_list.empty()) {
+			return false;
 		}
-		return result.second;
+		auto result = useItemMap.emplace(std::stoi(id_list[0]), *action);
+		bool success = result.second;
+		for (int32_t i = 1; i < (id_list.size() - 1); i++) {
+			int32_t id = std::stoi(id_list[i]);
+			result = useItemMap.emplace(id, *action);
+			if (!result.second) {
+				std::cout << "[Warning - Actions::registerEvent] Duplicate registered item with id: " << id << std::endl;
+				continue;
+			}
+			success = true;
+		}
+
+		return success;
 	} else if ((attr = node.attribute("fromid"))) {
 		pugi::xml_attribute toIdAttribute = node.attribute("toid");
 		if (!toIdAttribute) {
