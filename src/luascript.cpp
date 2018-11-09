@@ -9911,6 +9911,7 @@ int LuaScriptInterface::luaMonsterGetLevel(lua_State* L)
 	} else {
 		lua_pushnil(L);
 	}
+	return 1;
 }
 
 // Npc
