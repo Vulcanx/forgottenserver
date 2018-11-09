@@ -221,7 +221,7 @@ ReturnValue Combat::canTargetCreature(Player* attacker, Creature* target)
 			return RETURNVALUE_YOUMAYNOTATTACKTHISPLAYER;
 		}
 
-		if (attacker->hasSecureMode() && !Combat::isInPvpZone(attacker, target) && attacker->getSkullClient(target->getPlayer()) == SKULL_NONE) {
+		if (attacker->hasSecureMode()) {
 			return RETURNVALUE_TURNSECUREMODETOATTACKUNMARKEDPLAYERS;
 		}
 	}
@@ -486,40 +486,55 @@ CallBack* Combat::getCallback(CallBackParam_t key)
 
 void Combat::CombatHealthFunc(Creature* caster, Creature* target, const CombatParams& params, CombatDamage* data)
 {
-	assert(data);
-	CombatDamage damage = *data;
-	if (g_game.combatBlockHit(damage, caster, target, params.blockedByShield, params.blockedByArmor, params.itemId != 0)) {
-		return;
-	}
+    assert(data);
+    CombatDamage damage = *data;
 
-	if ((damage.primary.value < 0 || damage.secondary.value < 0) && caster) {
-		Player* targetPlayer = target->getPlayer();
-		if (targetPlayer && caster->getPlayer() && targetPlayer->getSkull() != SKULL_BLACK) {
-			damage.primary.value /= 2;
-			damage.secondary.value /= 2;
-		}
-	}
+    Player* targetPlayer = target ? target->getPlayer() : nullptr;
+    Player* casterPlayer = caster ? caster->getPlayer() : nullptr;
 
-	if (g_game.combatChangeHealth(caster, target, damage)) {
-		CombatConditionFunc(caster, target, params, &damage);
-		CombatDispelFunc(caster, target, params, nullptr);
-	}
+    if (damage.primary.value < 0 || damage.secondary.value < 0) {
+        if (targetPlayer && casterPlayer && casterPlayer->hasSecureMode()) {
+            return;
+        }
+    }
+
+    if (g_game.combatBlockHit(damage, caster, target, params.blockedByShield, params.blockedByArmor, params.itemId != 0)) {
+        return;
+    }
+
+    if ((damage.primary.value < 0 || damage.secondary.value < 0) && caster) {
+        if (targetPlayer && caster->getPlayer() && targetPlayer->getSkull() != SKULL_BLACK) {
+            damage.primary.value /= 2;
+            damage.secondary.value /= 2;
+        }
+    }
+
+    if (g_game.combatChangeHealth(caster, target, damage)) {
+        CombatConditionFunc(caster, target, params, &damage);
+        CombatDispelFunc(caster, target, params, nullptr);
+    }
 }
 
 void Combat::CombatManaFunc(Creature* caster, Creature* target, const CombatParams& params, CombatDamage* damage)
 {
-	assert(damage);
-	CombatDamage damageCopy = *damage;
-	if (damageCopy.primary.value < 0) {
-		if (caster && caster->getPlayer() && target->getPlayer()) {
-			damageCopy.primary.value /= 2;
-		}
-	}
+    assert(damage);
+    CombatDamage damageCopy = *damage;
 
-	if (g_game.combatChangeMana(caster, target, damageCopy)) {
-		CombatConditionFunc(caster, target, params, nullptr);
-		CombatDispelFunc(caster, target, params, nullptr);
-	}
+    Player* targetPlayer = target ? target->getPlayer() : nullptr;
+    Player* casterPlayer = caster ? caster->getPlayer() : nullptr;
+
+    if (damageCopy.primary.value < 0) {
+        if (targetPlayer && casterPlayer && casterPlayer->hasSecureMode()) {
+            return;
+        } else if (caster && casterPlayer && targetPlayer) {
+            damageCopy.primary.value /= 2;
+        }
+    }
+
+    if (g_game.combatChangeMana(caster, target, damageCopy)) {
+        CombatConditionFunc(caster, target, params, nullptr);
+        CombatDispelFunc(caster, target, params, nullptr);
+    }
 }
 
 void Combat::CombatConditionFunc(Creature* caster, Creature* target, const CombatParams& params, CombatDamage* data)
