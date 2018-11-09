@@ -74,7 +74,7 @@ class Monster final : public Creature
 			return mType->nameDescription;
 		}
 		std::string getDescription(int32_t) const override {
-			return strDescription + '.';
+			return strDescription + ", it is level " + std::to_string(level) + '.';
 		}
 
 		CreatureType_t getType() const override {
@@ -122,6 +122,9 @@ class Monster final : public Creature
 		}
 		void setSpawn(Spawn* spawn) {
 			this->spawn = spawn;
+		}
+		int32_t getLevel() const {
+			return level;
 		}
 		bool canWalkOnFieldType(CombatType_t combatType) const;
 
@@ -199,6 +202,8 @@ class Monster final : public Creature
 		int32_t maxCombatValue = 0;
 		int32_t targetChangeCooldown = 0;
 		int32_t stepDuration = 0;
+
+		int32_t level = 0;
 
 		Position masterPos;
 

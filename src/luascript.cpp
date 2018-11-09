@@ -2385,6 +2385,8 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod("Monster", "selectTarget", LuaScriptInterface::luaMonsterSelectTarget);
 	registerMethod("Monster", "searchTarget", LuaScriptInterface::luaMonsterSearchTarget);
 
+	registerMethod("Monster", "getLevel", LuaScriptInterface::luaMonsterGetLevel);
+
 	// Npc
 	registerClass("Npc", "Creature", LuaScriptInterface::luaNpcCreate);
 	registerMetaMethod("Npc", "__eq", LuaScriptInterface::luaUserdataCompare);
@@ -9898,6 +9900,17 @@ int LuaScriptInterface::luaMonsterSearchTarget(lua_State* L)
 		lua_pushnil(L);
 	}
 	return 1;
+}
+
+int LuaScriptInterface::luaMonsterGetLevel(lua_State* L)
+{
+	// monster:getLevel()
+	Monster* monster = getUserdata<Monster>(L, 1);
+	if (monster) {
+		lua_pushnumber(L, monster->getLevel());
+	} else {
+		lua_pushnil(L);
+	}
 }
 
 // Npc
