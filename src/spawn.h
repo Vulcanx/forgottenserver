@@ -75,6 +75,7 @@ class Spawn
 		uint32_t checkSpawnEvent = 0;
 
 		static bool findPlayer(const Position& pos);
+		void scheduleSpawn(uint32_t spawnId, spawnBlock_t& sb, uint16_t interval);
 		bool spawnMonster(uint32_t spawnId, MonsterType* mType, const Position& pos, Direction dir, bool startup = false);
 		void checkSpawn();
 };
