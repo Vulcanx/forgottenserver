@@ -149,7 +149,13 @@ bool MoveEvents::registerEvent(Event_ptr event, const pugi::xml_node& node)
 			addEvent(*moveEvent, id, uniqueIdMap);
 		}
 	} else if ((attr = node.attribute("actionid"))) {
-		addEvent(std::move(*moveEvent), pugi::cast<int32_t>(attr.value()), actionIdMap);
+		std::string ids = pugi::cast<std::string>(attr.value());
+		std::vector<std::string> id_list;
+		boost::split(id_list, ids, boost::is_any_of(";"));
+		for (auto str : id_list) {
+			int32_t id = std::stoi(str);
+			addEvent(std::move(*moveEvent), id, actionIdMap);
+		}
 	} else if ((attr = node.attribute("fromaid"))) {
 		uint32_t id = pugi::cast<uint32_t>(attr.value());
 		uint32_t endId = pugi::cast<uint32_t>(node.attribute("toaid").value());
