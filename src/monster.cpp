@@ -626,6 +626,11 @@ bool Monster::isTarget(const Creature* creature) const
 		return false;
 	}
 
+	std::vector<int> floorids = {};
+	if (std::find(floorids.begin(), floorids.end(), creature->getTile()->getGround()->getID()) != floorids.end()) {
+		return false;
+	}
+
 	if (creature->getPosition().z != getPosition().z) {
 		return false;
 	}
