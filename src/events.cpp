@@ -61,7 +61,11 @@ bool Events::load()
 
 		const std::string& methodName = eventNode.attribute("method").as_string();
 		const int32_t event = scriptInterface.getMetaEvent(className, methodName);
-		if (className == "Creature") {
+		if (className == "Monster") {
+		   if (methodName == "onSpawn") {
+			   info.monsterOnSpawn = event;
+		   }
+		} else if (className == "Creature") {
 			if (methodName == "onChangeOutfit") {
 				info.creatureOnChangeOutfit = event;
 			} else if (methodName == "onAreaCombat") {
@@ -124,6 +128,34 @@ bool Events::load()
 		}
 	}
 	return true;
+}
+
+// Monster
+bool Events::eventMonsterOnSpawn(Monster* monster, const Position& position, bool startup, bool artificial)
+{
+   // Monster:onSpawn(position)
+   if (info.monsterOnSpawn == -1) {
+       return true;
+   }
+ 
+   if (!scriptInterface.reserveScriptEnv()) {
+       std::cout << "[Error - Events::monsterOnSpawn] Call stack overflow" << std::endl;
+       return false;
+   }
+ 
+   ScriptEnvironment* env = scriptInterface.getScriptEnv();
+   env->setScriptId(info.monsterOnSpawn, &scriptInterface);
+ 
+   lua_State* L = scriptInterface.getLuaState();
+   scriptInterface.pushFunction(info.monsterOnSpawn);
+ 
+   LuaScriptInterface::pushUserdata<Monster>(L, monster);
+   LuaScriptInterface::setMetatable(L, -1, "Monster");
+   LuaScriptInterface::pushPosition(L, position);
+   LuaScriptInterface::pushBoolean(L, startup);
+   LuaScriptInterface::pushBoolean(L, artificial);
+ 
+   return scriptInterface.callFunction(4);
 }
 
 // Creature

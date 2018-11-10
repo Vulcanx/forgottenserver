@@ -35,6 +35,7 @@
 #include "monster.h"
 #include "scheduler.h"
 #include "databasetasks.h"
+#include "events.h"
 
 extern Chat* g_chat;
 extern Game g_game;
@@ -42,6 +43,7 @@ extern Monsters g_monsters;
 extern ConfigManager g_config;
 extern Vocations g_vocations;
 extern Spells* g_spells;
+extern Events* g_events;
 
 ScriptEnvironment::DBResultMap ScriptEnvironment::tempResults;
 uint32_t ScriptEnvironment::lastResultId = 0;
@@ -4179,24 +4181,30 @@ int LuaScriptInterface::luaGameCreateContainer(lua_State* L)
 
 int LuaScriptInterface::luaGameCreateMonster(lua_State* L)
 {
-	// Game.createMonster(monsterName, position[, extended = false[, force = false]])
-	Monster* monster = Monster::createMonster(getString(L, 1));
-	if (!monster) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	const Position& position = getPosition(L, 2);
-	bool extended = getBoolean(L, 3, false);
-	bool force = getBoolean(L, 4, false);
-	if (g_game.placeCreature(monster, position, extended, force)) {
-		pushUserdata<Monster>(L, monster);
-		setMetatable(L, -1, "Monster");
-	} else {
-		delete monster;
-		lua_pushnil(L);
-	}
-	return 1;
+   // Game.createMonster(monsterName, position[, extended = false[, force = false]])
+   Monster* monster = Monster::createMonster(getString(L, 1));
+   if (!monster) {
+       lua_pushnil(L);
+       return 1;
+   }
+ 
+   const Position& position = getPosition(L, 2);
+   bool extended = getBoolean(L, 3, false);
+   bool force = getBoolean(L, 4, false);
+   bool result = g_events->eventMonsterOnSpawn(monster, position, false, true);
+   if (result) {
+       if (g_game.placeCreature(monster, position, extended, force)) {
+           pushUserdata<Monster>(L, monster);
+           setMetatable(L, -1, "Monster");
+       } else {
+           delete monster;
+           lua_pushnil(L);
+       }
+   } else {
+       delete monster;
+       lua_pushnil(L);
+   }
+   return 1;
 }
 
 int LuaScriptInterface::luaGameCreateNpc(lua_State* L)

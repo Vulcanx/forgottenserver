@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <events>
+	<!-- Monster methods -->
+	<event class="Monster" method="onSpawn" enabled="0" />
+
 	<!-- Creature methods -->
 	<event class="Creature" method="onChangeOutfit" enabled="0" />
 	<event class="Creature" method="onAreaCombat" enabled="0" />

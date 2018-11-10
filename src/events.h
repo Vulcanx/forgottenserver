@@ -29,6 +29,9 @@ class Tile;
 class Events
 {
 	struct EventsInfo {
+		// Monster
+		int32_t monsterOnSpawn = -1;
+
 		// Creature
 		int32_t creatureOnChangeOutfit = -1;
 		int32_t creatureOnAreaCombat = -1;
@@ -63,6 +66,9 @@ class Events
 		Events();
 
 		bool load();
+
+		// Monster
+		bool eventMonsterOnSpawn(Monster* monster, const Position& position, bool startup, bool artificial);
 
 		// Creature
 		bool eventCreatureOnChangeOutfit(Creature* creature, const Outfit_t& outfit);
