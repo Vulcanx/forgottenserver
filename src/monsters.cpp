@@ -687,6 +687,10 @@ MonsterType* Monsters::loadMonster(const std::string& file, const std::string& m
 		mType->info.skull = getSkullType(asLowerCaseString(attr.as_string()));
 	}
 
+	if ((attr = monsterNode.attribute("emblem"))) {
+		mType->info.emblem = getEmblemType(pugi::cast<int32_t>(attr.value()));
+	}
+
 	if ((attr = monsterNode.attribute("script"))) {
 		if (!scriptInterface) {
 			scriptInterface.reset(new LuaScriptInterface("Monster Interface"));

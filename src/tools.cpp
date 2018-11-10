@@ -503,6 +503,7 @@ using CombatTypeNames = std::unordered_map<CombatType_t, std::string, std::hash<
 using AmmoTypeNames = std::unordered_map<std::string, Ammo_t>;
 using WeaponActionNames = std::unordered_map<std::string, WeaponAction_t>;
 using SkullNames = std::unordered_map<std::string, Skulls_t>;
+using Emblems = std::unordered_map<int32_t, GuildEmblems_t>;
 
 MagicEffectNames magicEffectNames = {
 	{"redspark",		CONST_ME_DRAWBLOOD},
@@ -698,6 +699,14 @@ SkullNames skullNames = {
 	{"orange",	SKULL_ORANGE},
 };
 
+Emblems emblems = {
+	{1, GUILDEMBLEM_ALLY},
+	{2, GUILDEMBLEM_ENEMY},
+	{3, GUILDEMBLEM_NEUTRAL},
+	{4, GUILDEMBLEM_MEMBER},
+	{5, GUILDEMBLEM_OTHER}
+};
+
 MagicEffectClasses getMagicEffect(const std::string& strValue)
 {
 	auto magicEffect = magicEffectNames.find(strValue);
@@ -750,6 +759,15 @@ Skulls_t getSkullType(const std::string& strValue)
 		return skullType->second;
 	}
 	return SKULL_NONE;
+}
+
+GuildEmblems_t getEmblemType(int32_t val)
+{
+	auto emblem = emblems.find(val);
+	if (emblem != emblems.end()) {
+		return emblem->second;
+	}
+	return GUILDEMBLEM_NONE;
 }
 
 std::string getSpecialSkillName(uint8_t skillid)

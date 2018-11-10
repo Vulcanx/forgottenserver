@@ -35,6 +35,7 @@
 #include "waitlist.h"
 #include "ban.h"
 #include "scheduler.h"
+#include "monster.h"
 
 extern ConfigManager g_config;
 extern Actions actions;
@@ -2848,7 +2849,13 @@ void ProtocolGame::AddCreature(NetworkMessage& msg, const Creature* creature, bo
 	msg.addByte(player->getPartyShield(otherPlayer));
 
 	if (!known) {
-		msg.addByte(player->getGuildEmblem(otherPlayer));
+		GuildEmblems_t emblem = GUILDEMBLEM_NONE;
+		if (otherPlayer) {
+			emblem = player->getGuildEmblem(otherPlayer);
+		} else if (const Monster* monster = creature->getMonster()) {
+			emblem = monster->getEmblem();
+		}
+		msg.addByte(emblem);
 	}
 
 	if (creatureType == CREATURETYPE_MONSTER) {

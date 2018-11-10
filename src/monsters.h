@@ -104,6 +104,7 @@ class MonsterType
 		std::vector<summonBlock_t> summons;
 
 		Skulls_t skull = SKULL_NONE;
+		GuildEmblems_t emblem = GUILDEMBLEM_NONE;
 		Outfit_t outfit = {};
 		RaceType_t race = RACE_BLOOD;
 

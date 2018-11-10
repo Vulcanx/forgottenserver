@@ -69,6 +69,7 @@ ShootType_t getShootType(const std::string& strValue);
 Ammo_t getAmmoType(const std::string& strValue);
 WeaponAction_t getWeaponAction(const std::string& strValue);
 Skulls_t getSkullType(const std::string& strValue);
+GuildEmblems_t getEmblemType(int32_t val);
 std::string getCombatName(CombatType_t combatType);
 
 std::string getSpecialSkillName(uint8_t skillid);
