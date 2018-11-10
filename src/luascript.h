@@ -797,6 +797,9 @@ class LuaScriptInterface
 		static int luaCreatureGetOutfit(lua_State* L);
 		static int luaCreatureSetOutfit(lua_State* L);
 
+		static int luaCreatureGetEmblem(lua_State* L);
+		static int luaCreatureSetEmblem(lua_State* L);
+
 		static int luaCreatureGetCondition(lua_State* L);
 		static int luaCreatureAddCondition(lua_State* L);
 		static int luaCreatureRemoveCondition(lua_State* L);

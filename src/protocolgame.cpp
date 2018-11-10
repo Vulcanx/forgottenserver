@@ -1257,6 +1257,26 @@ void ProtocolGame::sendCreatureSkull(const Creature* creature)
 	writeToOutputBuffer(msg);
 }
 
+void ProtocolGame::sendCreatureEmblem(Creature* creature)
+{
+	if (!canSee(creature)) {
+		return;
+	}
+	// npcs dont have emblems yet
+	if (creature->getNpc()) {
+		return;
+	}
+	Position pos = creature->getPosition();
+	int32_t stackpos = creature->getTile()->getClientIndexOfCreature(player, creature);
+	sendRemoveTileThing(pos, stackpos);
+	NetworkMessage msg;
+	msg.addByte(0x6A);
+	msg.addPosition(pos);
+	msg.addByte(stackpos);
+	AddCreature(msg, creature, false, creature->getID());
+	writeToOutputBuffer(msg);
+}
+
 void ProtocolGame::sendCreatureType(uint32_t creatureId, uint8_t creatureType)
 {
 	NetworkMessage msg;

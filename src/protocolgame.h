@@ -203,6 +203,7 @@ class ProtocolGame final : public Protocol
 		void sendCreatureWalkthrough(const Creature* creature, bool walkthrough);
 		void sendCreatureShield(const Creature* creature);
 		void sendCreatureSkull(const Creature* creature);
+		void sendCreatureEmblem(Creature* creature);
 		void sendCreatureType(uint32_t creatureId, uint8_t creatureType);
 		void sendCreatureHelpers(uint32_t creatureId, uint16_t helpers);
 

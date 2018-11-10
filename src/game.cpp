@@ -4585,6 +4585,15 @@ void Game::updateCreatureWalkthrough(const Creature* creature)
 	}
 }
 
+void Game::updateCreatureEmblem(Creature* creature)
+{
+	SpectatorHashSet spectators;
+	map.getSpectators(spectators, creature->getPosition(), true, true);
+	for (Creature* spectator : spectators) {
+		spectator->getPlayer()->sendCreatureEmblem(creature);
+	}
+}
+
 void Game::updateCreatureSkull(const Creature* creature)
 {
 	if (getWorldType() != WORLD_TYPE_PVP) {

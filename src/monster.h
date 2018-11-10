@@ -114,7 +114,13 @@ class Monster final : public Creature
 			return mType->info.isHostile;
 		}
 		GuildEmblems_t getEmblem() const {
+			if (currentEmblem != GUILDEMBLEM_NONE) {
+				return currentEmblem;
+			}
 			return mType->info.emblem;
+		}
+		void setEmblem(GuildEmblems_t emblem) {
+			currentEmblem = emblem;
 		}
 		bool canSee(const Position& pos) const override;
 		bool canSeeInvisibility() const override {
@@ -202,6 +208,8 @@ class Monster final : public Creature
 		int32_t maxCombatValue = 0;
 		int32_t targetChangeCooldown = 0;
 		int32_t stepDuration = 0;
+
+		GuildEmblems_t currentEmblem = GUILDEMBLEM_NONE;
 
 		Position masterPos;
 
