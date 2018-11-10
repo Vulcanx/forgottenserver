@@ -626,8 +626,8 @@ bool Monster::isTarget(const Creature* creature) const
 		return false;
 	}
 
-	std::vector<int> floorids = {};
-	if (std::find(floorids.begin(), floorids.end(), creature->getTile()->getGround()->getID()) != floorids.end()) {
+	std::vector<int> TARGET_IGNORE_TILES = {10766, 10773, 10770, 10772, 10774, 10767, 11956, 11958, 11955, 11945};
+	if (std::find(TARGET_IGNORE_TILES.begin(), TARGET_IGNORE_TILES.end(), creature->getTile()->getGround()->getID()) != TARGET_IGNORE_TILES.end()) {
 		return false;
 	}
 

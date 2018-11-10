@@ -582,6 +582,13 @@ void Creature::onCreatureMove(Creature* creature, const Tile* newTile, const Pos
 		}
 	}
 
+	if (const Monster* monster = this->getMonster()) {
+		std::vector<int> TARGET_IGNORE_TILES = {10766, 10773, 10770, 10772, 10774, 10767, 11956, 11958, 11955, 11945};
+		if (std::find(TARGET_IGNORE_TILES.begin(), TARGET_IGNORE_TILES.end(), newTile->getGround()->getID()) != TARGET_IGNORE_TILES.end()) {
+			onCreatureDisappear(attackedCreature, false);
+		}
+	}
+
 	if (creature == followCreature || (creature == this && followCreature)) {
 		if (hasFollowPath) {
 			isUpdatingPath = true;

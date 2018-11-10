@@ -840,7 +840,10 @@ int_fast32_t AStarNodes::getTileWalkCost(const Creature& creature, const Tile* t
 		//destroy creature cost
 		cost += MAP_NORMALWALKCOST * 3;
 	}
-
+	std::vector<int> TARGET_IGNORE_TILES = {10766, 10773, 10770, 10772, 10774, 10767, 11956, 11958, 11955, 11945};
+	if (std::find(TARGET_IGNORE_TILES.begin(), TARGET_IGNORE_TILES.end(), tile->getGround()->getID()) != TARGET_IGNORE_TILES.end()) {
+		cost += MAP_NORMALWALKCOST * 18;
+	}
 	if (const MagicField* field = tile->getFieldItem()) {
 		CombatType_t combatType = field->getCombatType();
 		if (!creature.isImmune(combatType) && !creature.hasCondition(Combat::DamageToConditionType(combatType))) {
