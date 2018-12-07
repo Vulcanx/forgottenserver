@@ -813,7 +813,15 @@ bool MoveEvent::executeStep(Creature* creature, Item* item, const Position& pos)
 uint32_t MoveEvent::fireEquip(Player* player, Item* item, slots_t slot, bool isCheck)
 {
 	if (scripted) {
-		return executeEquip(player, item, slot, isCheck);
+		bool success = executeEquip(player, item, slot, isCheck);
+		if (success) {
+			if (getEventType() == MOVE_EVENT_EQUIP) {
+				EquipItem(this, player, item, slot, isCheck);
+			} else if (getEventType() == MOVE_EVENT_DEEQUIP) {
+				DeEquipItem(this, player, item, slot, isCheck);
+			}
+		}
+		return success;
 	} else {
 		return equipFunction(this, player, item, slot, isCheck);
 	}
