@@ -1,6 +1,5 @@
 /**
  * The Forgotten Server - a free and open-source MMORPG server emulator
- * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -184,7 +183,7 @@ class Map
 		  * Load a map.
 		  * \returns true if the map was loaded successfully
 		  */
-		bool loadMap(const std::string& identifier, bool loadHouses);
+		bool loadMap(const std::string& identifier, bool loadHouses, const Position& pos = Position(), bool unload = false);
 
 		/**
 		  * Save a map.

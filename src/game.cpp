@@ -1,6 +1,5 @@
 /**
  * The Forgotten Server - a free and open-source MMORPG server emulator
- * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,7 +53,6 @@ extern Events* g_events;
 extern Monsters g_monsters;
 extern MoveEvents* g_moveEvents;
 extern Weapons* g_weapons;
-extern Scripts* g_scripts;
 
 Game::Game()
 {
@@ -201,9 +199,9 @@ bool Game::loadMainMap(const std::string& filename)
 	return map.loadMap("data/world/" + filename + ".otbm", true);
 }
 
-void Game::loadMap(const std::string& path)
+void Game::loadMap(const std::string& path, const Position& pos, bool unload)
 {
-	map.loadMap(path, false);
+	map.loadMap(path, false, pos, unload);
 }
 
 Cylinder* Game::internalGetCylinder(Player* player, const Position& pos) const
@@ -3984,6 +3982,7 @@ bool Game::combatChangeHealth(Creature* attacker, Creature* target, CombatDamage
 			if (chance != 0 && uniform_random(1, 100) <= chance) {
 				CombatDamage manaLeech;
 				manaLeech.primary.value = std::round(healthChange * (attackerPlayer->getSpecialSkill(SPECIALSKILL_MANALEECHAMOUNT) / 100.));
+				manaLeech.primary.value = std::round(healthChange * (attackerPlayer->getSpecialSkill(SPECIALSKILL_LIFELEECHAMOUNT) / 100.));
 				g_game.combatChangeMana(nullptr, attackerPlayer, manaLeech);
 			}
 

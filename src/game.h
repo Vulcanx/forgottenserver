@@ -1,6 +1,5 @@
 /**
  * The Forgotten Server - a free and open-source MMORPG server emulator
- * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -95,7 +94,7 @@ class Game
 		void forceRemoveCondition(uint32_t creatureId, ConditionType_t type);
 
 		bool loadMainMap(const std::string& filename);
-		void loadMap(const std::string& path);
+		void loadMap(const std::string& path, const Position& pos = Position(), bool unload = false);
 
 		/**
 		  * Get the map size - info purpose only
@@ -503,8 +502,6 @@ class Game
 		Mounts mounts;
 		Raids raids;
 		Quests quests;
-
-		std::forward_list<Item*> toDecayItems;
 
 	private:
 		bool playerSaySpell(Player* player, SpeakClasses type, const std::string& text);

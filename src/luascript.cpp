@@ -1,6 +1,5 @@
 /**
  * The Forgotten Server - a free and open-source MMORPG server emulator
- * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1930,6 +1929,7 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod("Game", "getSpectators", LuaScriptInterface::luaGameGetSpectators);
 	registerMethod("Game", "getPlayers", LuaScriptInterface::luaGameGetPlayers);
 	registerMethod("Game", "loadMap", LuaScriptInterface::luaGameLoadMap);
+	registerMethod("Game", "loadMapChunk", LuaScriptInterface::luaGameLoadMapChunk);
 
 	registerMethod("Game", "getExperienceStage", LuaScriptInterface::luaGameGetExperienceStage);
 	registerMethod("Game", "getMonsterCount", LuaScriptInterface::luaGameGetMonsterCount);
@@ -4221,6 +4221,26 @@ int LuaScriptInterface::luaGameLoadMap(lua_State* L)
 			// FIXME: Should only catch some exceptions
 			std::cout << "[Error - LuaScriptInterface::luaGameLoadMap] Failed to load map: "
 				<< e.what() << std::endl;
+		}
+	}));
+	return 0;
+}
+
+int LuaScriptInterface::luaGameLoadMapChunk(lua_State* L)
+{
+	// Game.loadMapChunk(path, position, remove)
+	const std::string& path = getString(L, 1);
+	const Position& position = getPosition(L, 2);
+	bool unload = getBoolean(L, 3);
+	g_dispatcher.addTask(createTask([L, path, position, unload]() {
+		try {
+			g_game.loadMap(path, position, unload);
+		} catch (const std::exception& e) {
+			// FIXME: Should only catch some exceptions
+			std::cout << "[Error - LuaScriptInterface::luaGameLoadMapChunk] Failed to load map: "
+				<< e.what() << std::endl;
+		} catch (...) {
+			std::cout << "[Error - LuaScriptInterface::luaGameLoadMapChunk] Unknown exception occurred." << std::endl;
 		}
 	}));
 	return 0;
