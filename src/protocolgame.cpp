@@ -1256,6 +1256,23 @@ void ProtocolGame::sendCreatureSkull(const Creature* creature)
 	writeToOutputBuffer(msg);
 }
 
+void ProtocolGame::sendCreatureEmblem(const Creature* creature)
+{
+	if (!canSee(creature)) {
+		return;
+	}
+	// Remove creature from client and re-add to update
+	Position pos = creature->getPosition();
+	int32_t stackpos = creature->getTile()->getClientIndexOfCreature(player, creature);
+	sendRemoveTileThing(pos, stackpos);
+	NetworkMessage msg;
+	msg.addByte(0x6A);
+	msg.addPosition(pos);
+	msg.addByte(stackpos);
+	AddCreature(msg, creature, false, creature->getID());
+	writeToOutputBuffer(msg);
+}
+
 void ProtocolGame::sendCreatureType(uint32_t creatureId, uint8_t creatureType)
 {
 	NetworkMessage msg;
@@ -2841,7 +2858,11 @@ void ProtocolGame::AddCreature(NetworkMessage& msg, const Creature* creature, bo
 	msg.addByte(player->getPartyShield(otherPlayer));
 
 	if (!known) {
-		msg.addByte(player->getGuildEmblem(otherPlayer));
+		if (otherPlayer) {
+			msg.addByte(player->getGuildEmblem(otherPlayer));
+		} else {
+			msg.addByte(creature->getGuildEmblem());
+		}
 	}
 
 	if (creatureType == CREATURETYPE_MONSTER) {

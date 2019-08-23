@@ -1623,6 +1623,13 @@ void LuaScriptInterface::registerFunctions()
 	registerEnum(SKULL_BLACK)
 	registerEnum(SKULL_ORANGE)
 
+	registerEnum(GUILDEMBLEM_NONE)
+	registerEnum(GUILDEMBLEM_ALLY)
+	registerEnum(GUILDEMBLEM_ENEMY)
+	registerEnum(GUILDEMBLEM_NEUTRAL)
+	registerEnum(GUILDEMBLEM_MEMBER)
+	registerEnum(GUILDEMBLEM_OTHER)
+
 	registerEnum(TALKTYPE_SAY)
 	registerEnum(TALKTYPE_WHISPER)
 	registerEnum(TALKTYPE_YELL)
@@ -2236,6 +2243,9 @@ void LuaScriptInterface::registerFunctions()
 
 	registerMethod("Creature", "getSkull", LuaScriptInterface::luaCreatureGetSkull);
 	registerMethod("Creature", "setSkull", LuaScriptInterface::luaCreatureSetSkull);
+
+	registerMethod("Creature", "getEmblem", LuaScriptInterface::luaCreatureGetEmblem);
+	registerMethod("Creature", "setEmblem", LuaScriptInterface::luaCreatureSetEmblem);
 
 	registerMethod("Creature", "getOutfit", LuaScriptInterface::luaCreatureGetOutfit);
 	registerMethod("Creature", "setOutfit", LuaScriptInterface::luaCreatureSetOutfit);
@@ -7540,6 +7550,33 @@ int LuaScriptInterface::luaCreatureSetOutfit(lua_State* L)
 		pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int LuaScriptInterface::luaCreatureGetEmblem(lua_State* L)
+{
+	// creature:getEmblem()
+	Creature* creature = getUserdata<Creature>(L, 1);
+	if (creature) {
+		lua_pushnumber(L, creature->getGuildEmblem());
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int LuaScriptInterface::luaCreatureSetEmblem(lua_State* L)
+{
+	// creature:setEmblem(emblem)
+	Creature* creature = getUserdata<Creature>(L, 1);
+	GuildEmblems_t emblem = static_cast<GuildEmblems_t>(getNumber<int32_t>(L, 2));
+	if (creature) {
+		creature->setGuildEmblem(emblem);
+		g_game.updateCreatureEmblem(creature);
+		pushBoolean(L, true);
+	} else {
+		pushBoolean(L, false);
 	}
 	return 1;
 }

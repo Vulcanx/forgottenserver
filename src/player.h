@@ -682,6 +682,11 @@ class Player final : public Creature, public Cylinder
 				client->sendCreatureSkull(creature);
 			}
 		}
+		void sendCreatureEmblem(Creature* creature) const {
+			if (client) {
+				client->sendCreatureEmblem(creature);
+			}
+		}
 		void checkSkullTicks(int64_t ticks);
 
 		bool canWear(uint32_t lookType, uint8_t addons) const;

@@ -4051,6 +4051,10 @@ GuildEmblems_t Player::getGuildEmblem(const Player* player) const
 		return GUILDEMBLEM_NONE;
 	}
 
+	if (emblem != GUILDEMBLEM_NONE) {
+		return emblem;
+	}
+
 	const Guild* playerGuild = player->getGuild();
 	if (!playerGuild) {
 		return GUILDEMBLEM_NONE;
