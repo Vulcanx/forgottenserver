@@ -25,6 +25,8 @@
 #include "weapons.h"
 
 #include "pugicast.h"
+#include <rapidjson/filereadstream.h>
+#include <cstdio>
 
 extern MoveEvents* g_moveEvents;
 extern Weapons* g_weapons;
@@ -477,6 +479,7 @@ bool Items::loadFromOtb(const std::string& file)
 
 bool Items::loadFromXml()
 {
+	int64_t start = OTSYS_TIME();
 	pugi::xml_document doc;
 	pugi::xml_parse_result result = doc.load_file("data/items/items.xml");
 	if (!result) {
@@ -511,6 +514,45 @@ bool Items::loadFromXml()
 	}
 
 	buildInventoryList();
+	std::cout << "> Items XML loading time: " << (OTSYS_TIME() - start) / (1000.) << " seconds." << std::endl;
+	return true;
+}
+
+bool Items::loadFromJSON()
+{
+	int64_t start = OTSYS_TIME();
+	FILE* fp = fopen("data/items/items.json", "r");
+	char buf[65536];
+	rapidjson::FileReadStream is(fp, buf, sizeof(buf));
+	rapidjson::Document doc;
+	doc.ParseStream(is);
+	fclose(fp);
+
+	for (auto& obj : doc.GetArray()) {
+		if (obj.HasMember("id")) {
+			parseItemObject(obj, static_cast<uint16_t>(obj["id"].GetUint()));
+			continue;
+		}
+
+		if (!obj.HasMember("fromid")) {
+			std::cout << "[Warning - Items::loadFromJSON] No item id found" << std::endl;
+			continue;
+		}
+
+		if (!obj.HasMember("toid")) {
+			std::cout << "[Warning - Items::loadFromJSON] fromid (" << obj["fromid"].GetUint() << ") without toid" << std::endl;
+			continue;
+		}
+
+		uint16_t id = static_cast<uint16_t>(obj["fromid"].GetUint());
+		uint16_t toId = static_cast<uint16_t>(obj["toid"].GetUint());
+		while (id <= toId) {
+			parseItemObject(obj, id++);
+		}
+	}
+
+	buildInventoryList();
+	std::cout << "> Items JSON loading time: " << (OTSYS_TIME() - start) / (1000.) << " seconds." << std::endl;
 	return true;
 }
 
@@ -1338,6 +1380,810 @@ void Items::parseItemNode(const pugi::xml_node& itemNode, uint16_t id)
 	//check bed items
 	if ((it.transformToFree != 0 || it.transformToOnUse[PLAYERSEX_FEMALE] != 0 || it.transformToOnUse[PLAYERSEX_MALE] != 0) && it.type != ITEM_TYPE_BED) {
 		std::cout << "[Warning - Items::parseItemNode] Item " << it.id << " is not set as a bed-type" << std::endl;
+	}
+}
+
+void Items::parseItemObject(const rapidjson::Value& object, uint16_t id)
+{
+	if (id > 30000 && id < 30100) {
+		id -= 30000;
+
+		if (id >= items.size()) {
+			items.resize(id + 1);
+		}
+		ItemType& iType = items[id];
+		iType.id = id;
+	}
+
+	ItemType& it = getItemType(id);
+	if (it.id == 0) {
+		return;
+	}
+
+	it.name = object.HasMember("name") ? object["name"].GetString() : "";
+
+	nameToItems.insert({ asLowerCaseString(it.name), id });
+
+	if (object.HasMember("article")) {
+		it.article = object["article"].GetString();
+	}
+
+	if (object.HasMember("plural")) {
+		it.pluralName = object["plural"].GetString();
+	}
+
+	Abilities& abilities = it.getAbilities();
+
+	if (object.HasMember("attribute")) {
+		for (auto& attrObj : object["attribute"].GetArray()) {
+
+			if (!attrObj.HasMember("key")) {
+				continue;
+			}
+
+			if (!attrObj.HasMember("value")) {
+				continue;
+			}
+
+			std::string tmpStrValue = asLowerCaseString(attrObj["key"].GetString());
+			auto parseAttribute = ItemParseAttributesMap.find(tmpStrValue);
+			if (parseAttribute != ItemParseAttributesMap.end()) {
+				ItemParseAttributes_t parseType = parseAttribute->second;
+				switch (parseType) {
+					case ITEM_PARSE_TYPE: {
+						tmpStrValue = asLowerCaseString(attrObj["value"].GetString());
+						auto it2 = ItemTypesMap.find(tmpStrValue);
+						if (it2 != ItemTypesMap.end()) {
+							it.type = it2->second;
+							if (it.type == ITEM_TYPE_CONTAINER) {
+								it.group = ITEM_GROUP_CONTAINER;
+							}
+						} else {
+							std::cout << "[Warning - Items::parseItemNode] Unknown type: " << tmpStrValue << std::endl;
+						}
+						break;
+					}
+
+					case ITEM_PARSE_DESCRIPTION: {
+						it.description = attrObj["value"].GetString();
+						break;
+					}
+
+					case ITEM_PARSE_RUNESPELLNAME: {
+						it.runeSpellName = attrObj["value"].GetString();
+						break;
+					}
+
+					case ITEM_PARSE_WEIGHT: {
+						it.weight = attrObj["value"].GetUint();
+						break;
+					}
+
+					case ITEM_PARSE_SHOWCOUNT: {
+						it.showCount = static_cast<bool>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_ARMOR: {
+						it.armor = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_DEFENSE: {
+						it.defense = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_EXTRADEF: {
+						it.extraDefense = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_ATTACK: {
+						it.attack = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_ROTATETO: {
+						it.rotateTo = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_MOVEABLE: {
+						it.moveable = static_cast<bool>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_BLOCKPROJECTILE: {
+						it.blockProjectile = static_cast<bool>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_PICKUPABLE: {
+						it.allowPickupable = static_cast<bool>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_FORCESERIALIZE: {
+						it.forceSerialize = static_cast<bool>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_FLOORCHANGE: {
+						tmpStrValue = asLowerCaseString(attrObj["value"].GetString());
+						auto it2 = TileStatesMap.find(tmpStrValue);
+						if (it2 != TileStatesMap.end()) {
+							it.floorChange |= it2->second;
+						} else {
+							std::cout << "[Warning - Items::parseItemNode] Unknown floorChange: " << attrObj["value"].GetString() << std::endl;
+						}
+						break;
+					}
+
+					case ITEM_PARSE_CORPSETYPE: {
+						tmpStrValue = asLowerCaseString(attrObj["value"].GetString());
+						auto it2 = RaceTypesMap.find(tmpStrValue);
+						if (it2 != RaceTypesMap.end()) {
+							it.corpseType = it2->second; 
+						} else {
+							std::cout << "[Warning - Items::parseItemNode] Unknown corpseType: " << attrObj["value"].GetString() << std::endl;
+						}
+						break;
+					}
+
+					case ITEM_PARSE_CONTAINERSIZE: {
+						it.maxItems = static_cast<uint16_t>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_FLUIDSOURCE: {
+						tmpStrValue = asLowerCaseString(attrObj["value"].GetString());
+						auto it2 = FluidTypesMap.find(tmpStrValue);
+						if (it2 != FluidTypesMap.end()) {
+							it.fluidSource = it2->second;
+						} else {
+							std::cout << "[Warning - Items::parseItemNode] Unknown fluidSource: " << attrObj["value"].GetString() << std::endl;
+						}
+						break;
+					}
+
+					case ITEM_PARSE_READABLE: {
+						it.canReadText = static_cast<bool>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_WRITEABLE: {
+						it.canWriteText = static_cast<bool>(attrObj["value"].GetUint());
+						it.canReadText = it.canWriteText;
+						break;
+					}
+
+					case ITEM_PARSE_MAXTEXTLEN: {
+						it.maxTextLen = static_cast<uint16_t>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_WRITEONCEITEMID: {
+						it.writeOnceItemId = static_cast<uint16_t>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_WEAPONTYPE: {
+						tmpStrValue = asLowerCaseString(attrObj["value"].GetString());
+						auto it2 = WeaponTypesMap.find(tmpStrValue);
+						if (it2 != WeaponTypesMap.end()) {
+							it.weaponType = it2->second;
+						} else {
+							std::cout << "[Warning - Items::parseItemNode] Unknown weaponType: " << attrObj["value"].GetString() << std::endl;
+						}
+						break;
+					}
+
+					case ITEM_PARSE_SLOTTYPE: {
+						tmpStrValue = asLowerCaseString(attrObj["value"].GetString());
+						if (tmpStrValue == "head") {
+							it.slotPosition |= SLOTP_HEAD;
+						} else if (tmpStrValue == "body") {
+							it.slotPosition |= SLOTP_ARMOR;
+						} else if (tmpStrValue == "legs") {
+							it.slotPosition |= SLOTP_LEGS;
+						} else if (tmpStrValue == "feet") {
+							it.slotPosition |= SLOTP_FEET;
+						} else if (tmpStrValue == "backpack") {
+							it.slotPosition |= SLOTP_BACKPACK;
+						} else if (tmpStrValue == "two-handed") {
+							it.slotPosition |= SLOTP_TWO_HAND;
+						} else if (tmpStrValue == "right-hand") {
+							it.slotPosition &= ~SLOTP_LEFT;
+						} else if (tmpStrValue == "left-hand") {
+							it.slotPosition &= ~SLOTP_RIGHT;
+						} else if (tmpStrValue == "necklace") {
+							it.slotPosition |= SLOTP_NECKLACE;
+						} else if (tmpStrValue == "ring") {
+							it.slotPosition |= SLOTP_RING;
+						} else if (tmpStrValue == "ammo") {
+							it.slotPosition |= SLOTP_AMMO;
+						} else if (tmpStrValue == "hand") {
+							it.slotPosition |= SLOTP_HAND;
+						} else {
+							std::cout << "[Warning - Items::parseItemNode] Unknown slotType: " << attrObj["value"].GetString() << std::endl;
+						}
+						break;
+					}
+
+					case ITEM_PARSE_AMMOTYPE: {
+						it.ammoType = getAmmoType(asLowerCaseString(attrObj["value"].GetString()));
+						if (it.ammoType == AMMO_NONE) {
+							std::cout << "[Warning - Items::parseItemNode] Unknown ammoType: " << attrObj["value"].GetString() << std::endl;
+						}
+						break;
+					}
+
+					case ITEM_PARSE_SHOOTTYPE: {
+						ShootType_t shoot = getShootType(asLowerCaseString(attrObj["value"].GetString()));
+						if (shoot != CONST_ANI_NONE) {
+							it.shootType = shoot;
+						} else {
+							std::cout << "[Warning - Items::parseItemNode] Unknown shootType: " << attrObj["value"].GetString() << std::endl;
+						}
+						break;
+					}
+
+					case ITEM_PARSE_EFFECT: {
+						MagicEffectClasses effect = getMagicEffect(asLowerCaseString(attrObj["value"].GetString()));
+						if (effect != CONST_ME_NONE) {
+							it.magicEffect = effect;
+						} else {
+							std::cout << "[Warning - Items::parseItemNode] Unknown effect: " << attrObj["value"].GetString() << std::endl;
+						}
+						break;
+					}
+
+					case ITEM_PARSE_RANGE: {
+						it.shootRange = static_cast<uint16_t>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_STOPDURATION: {
+						it.stopTime = static_cast<bool>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_DECAYTO: {
+						it.decayTo = attrObj["value"].GetUint();
+						break;
+					}
+
+					case ITEM_PARSE_TRANSFORMEQUIPTO: {
+						it.transformEquipTo = static_cast<uint16_t>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_TRANSFORMDEEQUIPTO: {
+						it.transformDeEquipTo = static_cast<uint16_t>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_DURATION: {
+						it.decayTime = attrObj["value"].GetUint();
+						break;
+					}
+
+					case ITEM_PARSE_SHOWDURATION: {
+						it.showDuration = static_cast<bool>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_CHARGES: {
+						it.charges = attrObj["value"].GetUint();
+						break;
+					}
+
+					case ITEM_PARSE_SHOWCHARGES: {
+						it.showCharges = static_cast<bool>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_SHOWATTRIBUTES: {
+						it.showAttributes = static_cast<bool>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_HITCHANCE: {
+						it.hitChance = std::min<int8_t>(100, std::max<int8_t>(-100, attrObj["value"].GetInt()));
+						break;
+					}
+
+					case ITEM_PARSE_MAXHITCHANCE: {
+						it.maxHitChance = std::min<uint32_t>(100, attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_INVISIBLE: {
+						abilities.invisible = static_cast<bool>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_SPEED: {
+						abilities.speed = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_HEALTHGAIN: {
+						abilities.regeneration = true;
+						abilities.healthGain = attrObj["value"].GetUint();
+						break;
+					}
+
+					case ITEM_PARSE_HEALTHTICKS: {
+						abilities.regeneration = true;
+						abilities.healthTicks = attrObj["value"].GetUint();
+						break;
+					}
+
+					case ITEM_PARSE_MANAGAIN: {
+						abilities.regeneration = true;
+						abilities.manaGain = attrObj["value"].GetUint();
+						break;
+					}
+
+					case ITEM_PARSE_MANATICKS: {
+						abilities.regeneration = true;
+						abilities.manaTicks = attrObj["value"].GetUint();
+						break;
+					}
+
+					case ITEM_PARSE_MANASHIELD: {
+						abilities.manaShield = static_cast<bool>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_SKILLSWORD: {
+						abilities.skills[SKILL_SWORD] = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_SKILLAXE: {
+						abilities.skills[SKILL_AXE] = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_SKILLCLUB: {
+						abilities.skills[SKILL_CLUB] = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_SKILLDIST: {
+						abilities.skills[SKILL_DISTANCE] = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_SKILLFISH: {
+						abilities.skills[SKILL_FISHING] = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_SKILLSHIELD: {
+						abilities.skills[SKILL_SHIELD] = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_SKILLFIST: {
+						abilities.skills[SKILL_FIST] = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_CRITICALHITAMOUNT: {
+						abilities.specialSkills[SPECIALSKILL_CRITICALHITAMOUNT] = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_CRITICALHITCHANCE: {
+						abilities.specialSkills[SPECIALSKILL_CRITICALHITCHANCE] = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_MANALEECHAMOUNT: {
+						abilities.specialSkills[SPECIALSKILL_MANALEECHAMOUNT] = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_MANALEECHCHANCE: {
+						abilities.specialSkills[SPECIALSKILL_MANALEECHCHANCE] = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_LIFELEECHAMOUNT: {
+						abilities.specialSkills[SPECIALSKILL_LIFELEECHAMOUNT] = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_LIFELEECHCHANCE: {
+						abilities.specialSkills[SPECIALSKILL_LIFELEECHCHANCE] = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_MAXHITPOINTS: {
+						abilities.stats[STAT_MAXHITPOINTS] = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_MAXHITPOINTSPERCENT: {
+						abilities.statsPercent[STAT_MAXHITPOINTS] = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_MAXMANAPOINTS: {
+						abilities.stats[STAT_MAXMANAPOINTS] = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_MAXMANAPOINTSPERCENT: {
+						abilities.statsPercent[STAT_MAXMANAPOINTS] = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_MAGICPOINTS: {
+						abilities.stats[STAT_MAGICPOINTS] = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_MAGICPOINTSPERCENT: {
+						abilities.statsPercent[STAT_MAGICPOINTS] = attrObj["value"].GetInt();
+						break;
+					}
+
+					case ITEM_PARSE_FIELDABSORBPERCENTENERGY: {
+						abilities.fieldAbsorbPercent[combatTypeToIndex(COMBAT_ENERGYDAMAGE)] += static_cast<int16_t>(attrObj["value"].GetInt());
+						break;
+					}
+
+					case ITEM_PARSE_FIELDABSORBPERCENTFIRE: {
+						abilities.fieldAbsorbPercent[combatTypeToIndex(COMBAT_FIREDAMAGE)] += static_cast<int16_t>(attrObj["value"].GetInt());
+						break;
+					}
+
+					case ITEM_PARSE_FIELDABSORBPERCENTPOISON: {
+						abilities.fieldAbsorbPercent[combatTypeToIndex(COMBAT_EARTHDAMAGE)] += static_cast<int16_t>(attrObj["value"].GetInt());
+						break;
+					}
+
+					case ITEM_PARSE_ABSORBPERCENTALL: {
+						int16_t value = static_cast<int16_t>(attrObj["value"].GetInt());
+						for (auto& i : abilities.absorbPercent) {
+							i += value;
+						}
+						break;
+					}
+
+					case ITEM_PARSE_ABSORBPERCENTELEMENTS: {
+						int16_t value = static_cast<int16_t>(attrObj["value"].GetInt());
+						abilities.absorbPercent[combatTypeToIndex(COMBAT_ENERGYDAMAGE)] += value;
+						abilities.absorbPercent[combatTypeToIndex(COMBAT_FIREDAMAGE)] += value;
+						abilities.absorbPercent[combatTypeToIndex(COMBAT_EARTHDAMAGE)] += value;
+						abilities.absorbPercent[combatTypeToIndex(COMBAT_ICEDAMAGE)] += value;
+						break;
+					}
+
+					case ITEM_PARSE_ABSORBPERCENTMAGIC: {
+						int16_t value = static_cast<int16_t>(attrObj["value"].GetInt());
+						abilities.absorbPercent[combatTypeToIndex(COMBAT_ENERGYDAMAGE)] += value;
+						abilities.absorbPercent[combatTypeToIndex(COMBAT_FIREDAMAGE)] += value;
+						abilities.absorbPercent[combatTypeToIndex(COMBAT_EARTHDAMAGE)] += value;
+						abilities.absorbPercent[combatTypeToIndex(COMBAT_ICEDAMAGE)] += value;
+						abilities.absorbPercent[combatTypeToIndex(COMBAT_HOLYDAMAGE)] += value;
+						abilities.absorbPercent[combatTypeToIndex(COMBAT_DEATHDAMAGE)] += value;
+						break;
+					}
+
+					case ITEM_PARSE_ABSORBPERCENTENERGY: {
+						abilities.absorbPercent[combatTypeToIndex(COMBAT_ENERGYDAMAGE)] += static_cast<int16_t>(attrObj["value"].GetInt());
+						break;
+					}
+
+					case ITEM_PARSE_ABSORBPERCENTFIRE: {
+						abilities.absorbPercent[combatTypeToIndex(COMBAT_FIREDAMAGE)] += static_cast<int16_t>(attrObj["value"].GetInt());
+						break;
+					}
+
+					case ITEM_PARSE_ABSORBPERCENTPOISON: {
+						abilities.absorbPercent[combatTypeToIndex(COMBAT_EARTHDAMAGE)] += static_cast<int16_t>(attrObj["value"].GetInt());
+						break;
+					}
+
+					case ITEM_PARSE_ABSORBPERCENTICE: {
+						abilities.absorbPercent[combatTypeToIndex(COMBAT_ICEDAMAGE)] += static_cast<int16_t>(attrObj["value"].GetInt());
+						break;
+					}
+
+					case ITEM_PARSE_ABSORBPERCENTHOLY: {
+						abilities.absorbPercent[combatTypeToIndex(COMBAT_HOLYDAMAGE)] += static_cast<int16_t>(attrObj["value"].GetInt());
+						break;
+					}
+
+					case ITEM_PARSE_ABSORBPERCENTDEATH: {
+						abilities.absorbPercent[combatTypeToIndex(COMBAT_DEATHDAMAGE)] += static_cast<int16_t>(attrObj["value"].GetInt());
+						break;
+					}
+
+					case ITEM_PARSE_ABSORBPERCENTLIFEDRAIN: {
+						abilities.absorbPercent[combatTypeToIndex(COMBAT_LIFEDRAIN)] += static_cast<int16_t>(attrObj["value"].GetInt());
+						break;
+					}
+
+					case ITEM_PARSE_ABSORBPERCENTMANADRAIN: {
+						abilities.absorbPercent[combatTypeToIndex(COMBAT_MANADRAIN)] += static_cast<int16_t>(attrObj["value"].GetInt());
+						break;
+					}
+
+					case ITEM_PARSE_ABSORBPERCENTDROWN: {
+						abilities.absorbPercent[combatTypeToIndex(COMBAT_DROWNDAMAGE)] += static_cast<int16_t>(attrObj["value"].GetInt());
+						break;
+					}
+
+					case ITEM_PARSE_ABSORBPERCENTPHYSICAL: {
+						abilities.absorbPercent[combatTypeToIndex(COMBAT_PHYSICALDAMAGE)] += static_cast<int16_t>(attrObj["value"].GetInt());
+						break;
+					}
+
+					case ITEM_PARSE_ABSORBPERCENTHEALING: {
+						abilities.absorbPercent[combatTypeToIndex(COMBAT_HEALING)] += static_cast<int16_t>(attrObj["value"].GetInt());
+						break;
+					}
+
+					case ITEM_PARSE_ABSORBPERCENTUNDEFINED: {
+						abilities.absorbPercent[combatTypeToIndex(COMBAT_UNDEFINEDDAMAGE)] += static_cast<int16_t>(attrObj["value"].GetInt());
+						break;
+					}
+
+					case ITEM_PARSE_SUPPRESSDRUNK: {
+						if (static_cast<bool>(attrObj["value"].GetUint())) {
+							abilities.conditionSuppressions |= CONDITION_DRUNK;
+						}
+						break;
+					}
+
+					case ITEM_PARSE_SUPPRESSENERGY: {
+						if (static_cast<bool>(attrObj["value"].GetUint())) {
+							abilities.conditionSuppressions |= CONDITION_ENERGY;
+						}
+						break;
+					}
+
+					case ITEM_PARSE_SUPPRESSFIRE: {
+						if (static_cast<bool>(attrObj["value"].GetUint())) {
+							abilities.conditionSuppressions |= CONDITION_FIRE;
+						}
+						break;
+					}
+
+					case ITEM_PARSE_SUPPRESSPOISON: {
+						if (static_cast<bool>(attrObj["value"].GetUint())) {
+							abilities.conditionSuppressions |= CONDITION_POISON;
+						}
+						break;
+					}
+
+					case ITEM_PARSE_SUPPRESSDROWN: {
+						if (static_cast<bool>(attrObj["value"].GetUint())) {
+							abilities.conditionSuppressions |= CONDITION_DROWN;
+						}
+						break;
+					}
+
+					case ITEM_PARSE_SUPPRESSPHYSICAL: {
+						if (static_cast<bool>(attrObj["value"].GetUint())) {
+							abilities.conditionSuppressions |= CONDITION_BLEEDING;
+						}
+						break;
+					}
+
+					case ITEM_PARSE_SUPPRESSFREEZE: {
+						if (static_cast<bool>(attrObj["value"].GetUint())) {
+							abilities.conditionSuppressions |= CONDITION_FREEZING;
+						}
+						break;
+					}
+
+					case ITEM_PARSE_SUPPRESSDAZZLE: {
+						if (static_cast<bool>(attrObj["value"].GetUint())) {
+							abilities.conditionSuppressions |= CONDITION_DAZZLED;
+						}
+						break;
+					}
+
+					case ITEM_PARSE_SUPPRESSCURSE: {
+						if (static_cast<bool>(attrObj["value"].GetUint())) {
+							abilities.conditionSuppressions |= CONDITION_CURSED;
+						}
+						break;
+					}
+
+					case ITEM_PARSE_FIELD: {
+						it.group = ITEM_GROUP_MAGICFIELD;
+						it.type = ITEM_TYPE_MAGICFIELD;
+
+						CombatType_t combatType = COMBAT_NONE;
+						ConditionDamage* conditionDamage = nullptr;
+
+						tmpStrValue = asLowerCaseString(attrObj["value"].GetString());
+						if (tmpStrValue == "fire") {
+							conditionDamage = new ConditionDamage(CONDITIONID_COMBAT, CONDITION_FIRE);
+							combatType = COMBAT_FIREDAMAGE;
+						} else if (tmpStrValue == "energy") {
+							conditionDamage = new ConditionDamage(CONDITIONID_COMBAT, CONDITION_ENERGY);
+							combatType = COMBAT_ENERGYDAMAGE;
+						} else if (tmpStrValue == "poison") {
+							conditionDamage = new ConditionDamage(CONDITIONID_COMBAT, CONDITION_POISON);
+							combatType = COMBAT_EARTHDAMAGE;
+						} else if (tmpStrValue == "drown") {
+							conditionDamage = new ConditionDamage(CONDITIONID_COMBAT, CONDITION_DROWN);
+							combatType = COMBAT_DROWNDAMAGE;
+						} else if (tmpStrValue == "physical") {
+							conditionDamage = new ConditionDamage(CONDITIONID_COMBAT, CONDITION_BLEEDING);
+							combatType = COMBAT_PHYSICALDAMAGE;
+						} else {
+							std::cout << "[Warning - Items::parseItemNode] Unknown field value: " << attrObj["value"].GetString() << std::endl;
+						}
+
+						if (combatType != COMBAT_NONE) {
+							it.combatType = combatType;
+							it.conditionDamage.reset(conditionDamage);
+
+							uint32_t ticks = 0;
+							int32_t start = 0;
+							int32_t count = 1;
+							if (attrObj.HasMember("attribute")) {
+								for (auto& subAttrObj : attrObj["attribute"].GetArray()) {
+									if (!subAttrObj.HasMember("key")) {
+										continue;
+									}
+
+									if (!subAttrObj.HasMember("value")) {
+										continue;
+									}
+
+									tmpStrValue = asLowerCaseString(subAttrObj["key"].GetString());
+									if (tmpStrValue == "ticks") {
+										ticks = subAttrObj["value"].GetUint();
+									} else if (tmpStrValue == "count") {
+										count = std::max<int32_t>(1, subAttrObj["value"].GetInt());
+									} else if (tmpStrValue == "start") {
+										start = std::max<int32_t>(0, subAttrObj["value"].GetInt());
+									} else if (tmpStrValue == "damage") {
+										int32_t damage = -subAttrObj["value"].GetInt();
+										if (start > 0) {
+											std::list<int32_t> damageList;
+											ConditionDamage::generateDamageList(damage, start, damageList);
+											for (int32_t damageValue : damageList) {
+												conditionDamage->addDamage(1, ticks, -damageValue);
+											}
+
+											start = 0;
+										} else {
+											conditionDamage->addDamage(count, ticks, damage);
+										}
+									}
+								}
+							}
+
+							conditionDamage->setParam(CONDITION_PARAM_FIELD, 1);
+
+							if (conditionDamage->getTotalDamage() > 0) {
+								conditionDamage->setParam(CONDITION_PARAM_FORCEUPDATE, 1);
+							}
+						}
+						break;
+					}
+
+					case ITEM_PARSE_REPLACEABLE: {
+						it.replaceable = static_cast<bool>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_PARTNERDIRECTION: {
+						it.bedPartnerDir = getDirection(attrObj["value"].GetString());
+						break;
+					}
+
+					case ITEM_PARSE_LEVELDOOR: {
+						it.levelDoor = attrObj["value"].GetUint();
+						break;
+					}
+
+					case ITEM_PARSE_MALETRANSFORMTO: {
+						uint16_t value = static_cast<uint16_t>(attrObj["value"].GetUint());
+						it.transformToOnUse[PLAYERSEX_MALE] = value;
+						ItemType& other = getItemType(value);
+						if (other.transformToFree == 0) {
+							other.transformToFree = it.id;
+						}
+
+						if (it.transformToOnUse[PLAYERSEX_FEMALE] == 0) {
+							it.transformToOnUse[PLAYERSEX_FEMALE] = value;
+						}
+						break;
+					}
+
+					case ITEM_PARSE_FEMALETRANSFORMTO: {
+						uint16_t value = static_cast<uint16_t>(attrObj["value"].GetUint());
+						it.transformToOnUse[PLAYERSEX_FEMALE] = value;
+
+						ItemType& other = getItemType(value);
+						if (other.transformToFree == 0) {
+							other.transformToFree = it.id;
+						}
+
+						if (it.transformToOnUse[PLAYERSEX_MALE] == 0) {
+							it.transformToOnUse[PLAYERSEX_MALE] = value;
+						}
+						break;
+					}
+
+					case ITEM_PARSE_TRANSFORMTO: {
+						it.transformToFree = static_cast<uint16_t>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_DESTROYTO: {
+						it.destroyTo = static_cast<uint16_t>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_ELEMENTICE: {
+						abilities.elementDamage = static_cast<uint16_t>(attrObj["value"].GetUint());
+						abilities.elementType = COMBAT_ICEDAMAGE;
+						break;
+					}
+
+					case ITEM_PARSE_ELEMENTEARTH: {
+						abilities.elementDamage = static_cast<uint16_t>(attrObj["value"].GetUint());
+						abilities.elementType = COMBAT_EARTHDAMAGE;
+						break;
+					}
+
+					case ITEM_PARSE_ELEMENTFIRE: {
+						abilities.elementDamage = static_cast<uint16_t>(attrObj["value"].GetUint());
+						abilities.elementType = COMBAT_FIREDAMAGE;
+						break;
+					}
+
+					case ITEM_PARSE_ELEMENTENERGY: {
+						abilities.elementDamage = static_cast<uint16_t>(attrObj["value"].GetUint());
+						abilities.elementType = COMBAT_ENERGYDAMAGE;
+						break;
+					}
+
+					case ITEM_PARSE_WALKSTACK: {
+						it.walkStack = static_cast<bool>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_BLOCKING: {
+						it.blockSolid = static_cast<bool>(attrObj["value"].GetUint());
+						break;
+					}
+
+					case ITEM_PARSE_ALLOWDISTREAD: {
+						it.allowDistRead = attrObj["value"].GetBool();
+						break;
+					}
+
+					default: {
+						// It should not ever get to here, only if you add a new key to the map and don't configure a case for it.
+						std::cout << "[Warning - Items::parseItemNode] Not configured key value: " << attrObj["value"].GetString() << std::endl;
+						break;
+					}
+				}
+			} else {
+				std::cout << "[Warning - Items::parseItemNode] Unknown key value: " << attrObj["value"].GetString() << std::endl;
+			}
+		}
+	}
+
+	//check bed items
+	if ((it.transformToFree != 0 || it.transformToOnUse[PLAYERSEX_FEMALE] != 0 || it.transformToOnUse[PLAYERSEX_MALE] != 0) && it.type != ITEM_TYPE_BED) {
+		std::cout << "[Warning - Items::parseItemObject] Item " << it.id << " is not set as a bed-type" << std::endl;
 	}
 }
 

@@ -42,6 +42,7 @@ class ConfigManager
 			CLASSIC_EQUIPMENT_SLOTS,
 			CLASSIC_ATTACK_SPEED,
 			SCRIPTS_CONSOLE_LOGS,
+			ITEMS_JSON,
 
 			LAST_BOOLEAN_CONFIG /* this must be the last one */
 		};

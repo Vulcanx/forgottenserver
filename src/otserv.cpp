@@ -203,9 +203,16 @@ void mainLoader(int, char*[], ServiceManager* services)
 		return;
 	}
 
-	if (!Item::items.loadFromXml()) {
-		startupErrorMessage("Unable to load items (XML)!");
-		return;
+	if (g_config.getBoolean(ConfigManager::ITEMS_JSON)) {
+		if (!Item::items.loadFromJSON()) {
+			startupErrorMessage("Unable to load items (JSON)!");
+			return;
+		}
+	} else {
+		if (!Item::items.loadFromXml()) {
+			startupErrorMessage("Unable to load items (XML)!");
+			return;
+		}
 	}
 
 	std::cout << ">> Loading script systems" << std::endl;

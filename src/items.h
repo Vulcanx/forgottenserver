@@ -24,6 +24,7 @@
 #include "enums.h"
 #include "itemloader.h"
 #include "position.h"
+#include <rapidjson/document.h>
 
 enum SlotPositionBits : uint32_t {
 	SLOTP_WHEREEVER = 0xFFFFFFFF,
@@ -412,6 +413,9 @@ class Items
 
 		bool loadFromXml();
 		void parseItemNode(const pugi::xml_node& itemNode, uint16_t id);
+
+		bool loadFromJSON();
+		void parseItemObject(const rapidjson::Value& object, uint16_t id);
 
 		void buildInventoryList();
 		const InventoryVector& getInventory() const {
