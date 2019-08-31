@@ -522,6 +522,10 @@ bool Items::loadFromJSON()
 {
 	int64_t start = OTSYS_TIME();
 	FILE* fp = fopen("data/items/items.json", "r");
+	if (!fp) {
+		std::cout << "[Error - Items::loadFromJSON] \"failed to load data/items/items.json\"." << std::endl;
+		return false;
+	}
 	char buf[65536];
 	rapidjson::FileReadStream is(fp, buf, sizeof(buf));
 	rapidjson::Document doc;
