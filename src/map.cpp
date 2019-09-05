@@ -27,10 +27,10 @@
 
 extern Game g_game;
 
-bool Map::loadMap(const std::string& identifier, bool loadHouses)
+bool Map::loadMap(const std::string& identifier, bool loadHouses, const Position& pos, bool unload)
 {
 	IOMap loader;
-	if (!loader.loadMap(this, identifier)) {
+	if (!loader.loadMap(this, identifier, pos, unload)) {
 		std::cout << "[Fatal - Map::loadMap] " << loader.getLastErrorString() << std::endl;
 		return false;
 	}
