@@ -95,6 +95,8 @@ class LuaScriptInterface;
 class Cylinder;
 class Game;
 
+struct LootBlock;
+
 class ScriptEnvironment
 {
 	public:
@@ -374,6 +376,7 @@ class LuaScriptInterface
 		static void pushInstantSpell(lua_State* L, const InstantSpell& spell);
 		static void pushPosition(lua_State* L, const Position& position, int32_t stackpos = 0);
 		static void pushOutfit(lua_State* L, const Outfit_t& outfit);
+		static void pushLoot(lua_State* L, const std::vector<LootBlock>& lootList);
 
 		//
 		static void setField(lua_State* L, const char* index, lua_Number value)
@@ -1251,7 +1254,8 @@ class LuaScriptInterface
 		static int luaMonsterTypeGetCreatureEvents(lua_State* L);
 		static int luaMonsterTypeRegisterEvent(lua_State* L);
 
-		static int luaMonsterTypeSetScriptFile(lua_State* L);
+		static int luaMonsterTypeEventOnCallback(lua_State* L);
+		static int luaMonsterTypeEventType(lua_State* L);
 
 		static int luaMonsterTypeGetSummonList(lua_State* L);
 		static int luaMonsterTypeAddSummon(lua_State* L);
@@ -1409,6 +1413,7 @@ class LuaScriptInterface
 		static int luaMoveEventItemId(lua_State* L);
 		static int luaMoveEventActionId(lua_State* L);
 		static int luaMoveEventUniqueId(lua_State* L);
+		static int luaMoveEventPosition(lua_State* L);
 
 		// GlobalEvents
 		static int luaCreateGlobalEvent(lua_State* L);
