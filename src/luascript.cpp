@@ -1501,6 +1501,7 @@ void LuaScriptInterface::registerFunctions()
 	registerEnum(ITEM_TYPE_RUNE)
 
 	registerEnum(ITEM_BAG)
+	registerEnum(ITEM_SHOPPING_BAG)
 	registerEnum(ITEM_GOLD_COIN)
 	registerEnum(ITEM_PLATINUM_COIN)
 	registerEnum(ITEM_CRYSTAL_COIN)
@@ -1894,6 +1895,11 @@ void LuaScriptInterface::registerFunctions()
 	registerEnumIn("configKeys", ConfigManager::CONVERT_UNSAFE_SCRIPTS)
 	registerEnumIn("configKeys", ConfigManager::CLASSIC_EQUIPMENT_SLOTS)
 	registerEnumIn("configKeys", ConfigManager::CLASSIC_ATTACK_SPEED)
+	registerEnumIn("configKeys", ConfigManager::SERVER_SAVE_NOTIFY_MESSAGE)
+	registerEnumIn("configKeys", ConfigManager::SERVER_SAVE_NOTIFY_DURATION)
+	registerEnumIn("configKeys", ConfigManager::SERVER_SAVE_CLEAN_MAP)
+	registerEnumIn("configKeys", ConfigManager::SERVER_SAVE_CLOSE)
+	registerEnumIn("configKeys", ConfigManager::SERVER_SAVE_SHUTDOWN)
 
 	registerEnumIn("configKeys", ConfigManager::MAP_NAME)
 	registerEnumIn("configKeys", ConfigManager::HOUSE_RENT_PERIOD)
@@ -2632,6 +2638,7 @@ void LuaScriptInterface::registerFunctions()
 
 	registerMethod("Combat", "setArea", LuaScriptInterface::luaCombatSetArea);
 	registerMethod("Combat", "addCondition", LuaScriptInterface::luaCombatAddCondition);
+	registerMethod("Combat", "clearConditions", LuaScriptInterface::luaCombatClearConditions);
 	registerMethod("Combat", "setCallback", LuaScriptInterface::luaCombatSetCallback);
 	registerMethod("Combat", "setOrigin", LuaScriptInterface::luaCombatSetOrigin);
 
@@ -4216,7 +4223,7 @@ int LuaScriptInterface::luaGameGetSpectators(lua_State* L)
 	int32_t minRangeY = getNumber<int32_t>(L, 6, 0);
 	int32_t maxRangeY = getNumber<int32_t>(L, 7, 0);
 
-	SpectatorHashSet spectators;
+	SpectatorVec spectators;
 	g_game.map.getSpectators(spectators, position, multifloor, onlyPlayers, minRangeX, maxRangeX, minRangeY, maxRangeY);
 
 	lua_createtable(L, spectators.size(), 0);
@@ -4769,11 +4776,11 @@ int LuaScriptInterface::luaPositionIsSightClear(lua_State* L)
 int LuaScriptInterface::luaPositionSendMagicEffect(lua_State* L)
 {
 	// position:sendMagicEffect(magicEffect[, player = nullptr])
-	SpectatorHashSet spectators;
+	SpectatorVec spectators;
 	if (lua_gettop(L) >= 3) {
 		Player* player = getPlayer(L, 3);
 		if (player) {
-			spectators.insert(player);
+			spectators.emplace_back(player);
 		}
 	}
 
@@ -4792,11 +4799,11 @@ int LuaScriptInterface::luaPositionSendMagicEffect(lua_State* L)
 int LuaScriptInterface::luaPositionSendDistanceEffect(lua_State* L)
 {
 	// position:sendDistanceEffect(positionEx, distanceEffect[, player = nullptr])
-	SpectatorHashSet spectators;
+	SpectatorVec spectators;
 	if (lua_gettop(L) >= 4) {
 		Player* player = getPlayer(L, 4);
 		if (player) {
-			spectators.insert(player);
+			spectators.emplace_back(player);
 		}
 	}
 
@@ -6651,8 +6658,7 @@ int LuaScriptInterface::luaItemDecay(lua_State* L)
 	Item* item = getUserdata<Item>(L, 1);
 	if (item) {
 		if (isNumber(L, 2)) {
-			ItemType& it = Item::items.getItemType(item->getID());
-			it.decayTo = getNumber<int32_t>(L, 2);
+			item->setDecayTo(getNumber<int32_t>(L, 2));
 		}
 
 		g_game.startDecay(item);
@@ -7751,9 +7757,9 @@ int LuaScriptInterface::luaCreatureSay(lua_State* L)
 		return 1;
 	}
 
-	SpectatorHashSet spectators;
+	SpectatorVec spectators;
 	if (target) {
-		spectators.insert(target);
+		spectators.emplace_back(target);
 	}
 
 	if (position.x != 0) {
@@ -9832,7 +9838,7 @@ int LuaScriptInterface::luaPlayerSetGhostMode(lua_State* L)
 	Tile* tile = player->getTile();
 	const Position& position = player->getPosition();
 
-	SpectatorHashSet spectators;
+	SpectatorVec spectators;
 	g_game.map.getSpectators(spectators, position, true, true);
 	for (Creature* spectator : spectators) {
 		Player* tmpPlayer = spectator->getPlayer();
@@ -11929,6 +11935,19 @@ int LuaScriptInterface::luaCombatAddCondition(lua_State* L)
 	Combat* combat = getUserdata<Combat>(L, 1);
 	if (combat && condition) {
 		combat->addCondition(condition->clone());
+		pushBoolean(L, true);
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int LuaScriptInterface::luaCombatClearConditions(lua_State* L)
+{
+	// combat:clearConditions()
+	Combat* combat = getUserdata<Combat>(L, 1);
+	if (combat) {
+		combat->clearConditions();
 		pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);
