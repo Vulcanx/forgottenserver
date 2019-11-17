@@ -19,7 +19,11 @@
 
 #include "otpch.h"
 
+#if __has_include("luajit/lua.hpp")
+#include <luajit/lua.hpp>
+#else
 #include <lua.hpp>
+#endif
 
 #include "configmanager.h"
 #include "game.h"
@@ -173,6 +177,12 @@ bool ConfigManager::load()
 	integer[MAX_MARKET_OFFERS_AT_A_TIME_PER_PLAYER] = getGlobalNumber(L, "maxMarketOffersAtATimePerPlayer", 100);
 	integer[MAX_PACKETS_PER_SECOND] = getGlobalNumber(L, "maxPacketsPerSecond", 25);
 
+	boolean[SERVER_SAVE_NOTIFY_MESSAGE] = getGlobalBoolean(L, "serverSaveNotifyMessage", true);
+	integer[SERVER_SAVE_NOTIFY_DURATION] = getGlobalNumber(L, "serverSaveNotifyDuration", 5);
+	boolean[SERVER_SAVE_CLEAN_MAP] = getGlobalBoolean(L, "serverSaveCleanMap", false);
+	boolean[SERVER_SAVE_CLOSE] = getGlobalBoolean(L, "serverSaveClose", false);
+	boolean[SERVER_SAVE_SHUTDOWN] = getGlobalBoolean(L, "serverSaveShutdown", true);
+
 	loaded = true;
 	lua_close(L);
 	return true;
@@ -187,13 +197,13 @@ bool ConfigManager::reload()
 	return result;
 }
 
-static std::string dummy;
+static std::string dummyStr;
 
 const std::string& ConfigManager::getString(string_config_t what) const
 {
 	if (what >= LAST_STRING_CONFIG) {
 		std::cout << "[Warning - ConfigManager::getString] Accessing invalid index: " << what << std::endl;
-		return dummy;
+		return dummyStr;
 	}
 	return string[what];
 }
