@@ -23,6 +23,10 @@
 
 #include "bed.h"
 
+#include "game.h"
+
+extern Game g_game;
+
 /*
 	OTBM_ROOTV1
 	|
@@ -249,19 +253,8 @@ bool IOMap::parseTileArea(OTB::Loader& loader, const OTB::Node& tileAreaNode, Ma
 				TileItemVector item_list = *items;
 				if (!item_list.size() == 0) {
 					for (Item* item : item_list) {
-						if (item != nullptr) {
-							tile->queryRemove(*item, item->getItemCount(), 0);
-							int32_t index = tile->getThingIndex(item);
-
-							//remove the item
-							tile->removeThing(item, item->getItemCount());
-
-							if (item->isRemoved()) {
-								item->onRemoved();
-								item->decrementReferenceCounter();
-							}
-
-							tile->postRemoveNotification(item, nullptr, index);
+						if (item) {
+							g_game.internalRemoveItem(item);
 						}
 					}
 				}
@@ -269,18 +262,7 @@ bool IOMap::parseTileArea(OTB::Loader& loader, const OTB::Node& tileAreaNode, Ma
 
 			Item* ground = tile->getGround();
 			if (ground) {
-				tile->queryRemove(*ground, 1, 0);
-				int32_t index = tile->getThingIndex(ground);
-
-				//remove the item
-				tile->removeThing(ground, 1);
-
-				if (ground->isRemoved()) {
-					ground->onRemoved();
-					ground->decrementReferenceCounter();
-				}
-
-				tile->postRemoveNotification(ground, nullptr, index);
+				g_game.internalRemoveItem(ground);
 			}
 			continue;
 		}
