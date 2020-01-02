@@ -117,6 +117,10 @@ function Player:onMoveItem(item, count, fromPosition, toPosition, fromCylinder, 
 end
 
 function Player:onItemMoved(item, count, fromPosition, toPosition, fromCylinder, toCylinder)
+	if not Enchantments.runEquipHandler(self, item, fromPosition, toPosition) then
+		item:moveTo(fromCylinder)
+		self:sendCancelMessage('You may not equip this item.')
+	end
 end
 
 function Player:onMoveCreature(creature, fromPosition, toPosition)

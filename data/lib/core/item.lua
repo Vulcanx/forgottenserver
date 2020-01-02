@@ -122,68 +122,7 @@ do
 		return begin
 	end
 
-	local function addGenerics(item, it, abilities, ss, begin)
-		local obj = item or it
-		if it:getWeaponType() == WEAPON_DISTANCE and it:getAmmoType() ~= 0 then
-			ss:append(' (Range:%d', obj:getShootRange())
-			local attack = obj:getAttack()
-			local hitChance = obj:getHitChance()
-			if attack ~= 0 then
-				ss:append(', Atk%s%d', showpos(attack), attack)
-			end
-
-			if hitChance ~= 0 then
-				ss:append(', Hit%%%s%d', showpos(hitChance), hitChance)
-			end
-
-			begin = false
-		elseif it:getWeaponType() ~= WEAPON_AMMO then
-			local attack = obj:getAttack()
-			local defense = obj:getDefense()
-			local extraDefense = obj:getExtraDefense()
-
-			if attack ~= 0 then
-				begin = false
-				ss:append(' (Atk:%d', attack)
-				
-				if abilities.elementType ~= COMBAT_NONE and abilities.elementDamage ~= 0 then
-					ss:append(' physical + %d %s', abilities.elementDamage, getCombatName(abilities.elementType))
-				end
-			end
-
-			if defense ~= 0 or extraDefense ~= 0 then
-				begin = addSeparator(ss, begin)
-				ss:append('Def:%d', defense)
-				if extraDefense ~= 0 then
-					ss:append(' %s%d', showpos(extraDefense), extraDefense)
-				end
-			end
-		end
-
-		-- Skills
-		for skill, value in ipairs(abilities.skills) do
-			if value ~= 0 then
-				begin = addSeparator(ss, begin)
-				ss:append('%s %s%d', getSkillName(skill - 1), showpos(value), value)
-			end
-		end
-
-		-- Special Skills
-		for specialSkill, value in ipairs(abilities.specialSkills) do
-			if value ~= 0 then
-				begin = addSeparator(ss, begin)
-				ss:append('%s %s%d%%', getSpecialSkillName(specialSkill - 1), showpos(value), value)
-			end
-		end
-
-		local magicPoints = abilities.stats[4]
-		if magicPoints ~= 0 then
-			begin = addSeparator(ss, begin)
-			ss:append('magic level %s%d', showpos(magicPoints), magicPoints)
-		end
-
-		-- Absorb
-
+	local function addAbsorb(item, it, abilities, ss, begin)
 		local show = abilities.absorbPercent[1]
 		if show ~= 0 then
 			for _, value in ipairs(abilities.absorbPercent) do
@@ -241,11 +180,83 @@ do
 			begin = addSeparator(ss, begin)
 			ss:append('protection all fields %s%d%%', showpos(show), show)
 		end
+		return begin
+	end
+
+	local function addSkills(item, it, abilities, ss, begin)
+		for skill, value in ipairs(abilities.skills) do
+			if value ~= 0 then
+				begin = addSeparator(ss, begin)
+				ss:append('%s %s%d', getSkillName(skill - 1), showpos(value), value)
+			end
+		end
+
+		-- Special Skills
+		for specialSkill, value in ipairs(abilities.specialSkills) do
+			if value ~= 0 then
+				begin = addSeparator(ss, begin)
+				ss:append('%s %s%d%%', getSpecialSkillName(specialSkill - 1), showpos(value), value)
+			end
+		end
+
+		local magicPoints = abilities.stats[4]
+		if magicPoints ~= 0 then
+			begin = addSeparator(ss, begin)
+			ss:append('magic level %s%d', showpos(magicPoints), magicPoints)
+		end
+		return begin
+	end
+
+	local function addGenerics(item, it, abilities, ss, begin)
+		local obj = item or it
+
+		if it:getWeaponType() == WEAPON_DISTANCE and it:getAmmoType() ~= 0 then
+			ss:append(' (Range:%d', obj:getShootRange())
+			local attack = obj:getAttack()
+			local hitChance = obj:getHitChance()
+			if attack ~= 0 then
+				ss:append(', Atk%s%d', showpos(attack), attack)
+			end
+
+			if hitChance ~= 0 then
+				ss:append(', Hit%%%s%d', showpos(hitChance), hitChance)
+			end
+
+			begin = false
+		elseif it:getWeaponType() ~= WEAPON_AMMO then
+			local attack = obj:getAttack()
+			local defense = obj:getDefense()
+			local extraDefense = obj:getExtraDefense()
+
+			if attack ~= 0 then
+				begin = false
+				ss:append(' (Atk:%d', attack)
+				
+				if abilities.elementType ~= COMBAT_NONE and abilities.elementDamage ~= 0 then
+					ss:append(' physical + %d %s', abilities.elementDamage, getCombatName(abilities.elementType))
+				end
+			end
+
+			if defense ~= 0 or extraDefense ~= 0 then
+				begin = addSeparator(ss, begin)
+				ss:append('Def:%d', defense)
+				if extraDefense ~= 0 then
+					ss:append(' %s%d', showpos(extraDefense), extraDefense)
+				end
+			end
+		end
+
+		-- Skills
+		begin = addSkills(item, it, abilities, ss, begin)
+
+		-- Absorb
+		begin = addAbsorb(item, it, abilities, ss, begin)
 
 		if abilities.speed ~= 0 then
 			begin = addSeparator(ss, begin)
 			ss:append('speed %s%d', showpos(abilities.speed), abilities.speed / 2)
 		end
+
 		return begin
 	end
 
