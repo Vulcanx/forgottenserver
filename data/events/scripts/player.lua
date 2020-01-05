@@ -85,6 +85,13 @@ function Player:onLookInShop(itemType, count)
 	return true
 end
 
+function Player:onEquip(item, slot, isCheck)
+	return true
+end
+
+function Player:onDeEquip(item, slot)
+end
+
 function Player:onMoveItem(item, count, fromPosition, toPosition, fromCylinder, toCylinder)
 	if toPosition.x ~= CONTAINER_POSITION then
 		return true

@@ -98,6 +98,10 @@ bool Events::load()
 				info.playerOnTradeRequest = event;
 			} else if (methodName == "onTradeAccept") {
 				info.playerOnTradeAccept = event;
+			} else if (methodName == "onEquip") {
+				info.playerOnEquip = event;
+			} else if (methodName == "onDeEquip") {
+				info.playerOnDeEquip = event;
 			} else if (methodName == "onMoveItem") {
 				info.playerOnMoveItem = event;
 			} else if (methodName == "onItemMoved") {
@@ -507,6 +511,65 @@ bool Events::eventPlayerOnLookInShop(Player* player, const ItemType* itemType, u
 	lua_pushnumber(L, count);
 
 	return scriptInterface.callFunction(3);
+}
+
+bool Events::eventPlayerOnEquip(Player* player, Item* item, slots_t slot, bool isCheck)
+{
+	// Player:onEquip(item, slot, isCheck)
+	if (info.playerOnEquip == -1) {
+		return true;
+	}
+
+	if (!scriptInterface.reserveScriptEnv()) {
+		std::cout << "[Error - Events::eventPlayerOnEquip] Call stack overflow" << std::endl;
+		return false;
+	}
+
+	ScriptEnvironment* env = scriptInterface.getScriptEnv();
+	env->setScriptId(info.playerOnEquip, &scriptInterface);
+
+	lua_State* L = scriptInterface.getLuaState();
+	scriptInterface.pushFunction(info.playerOnEquip);
+
+	LuaScriptInterface::pushUserdata<Player>(L, player);
+	LuaScriptInterface::setMetatable(L, -1, "Player");
+
+	LuaScriptInterface::pushUserdata<Item>(L, item);
+	LuaScriptInterface::setItemMetatable(L, -1, item);
+
+	lua_pushnumber(L, slot);
+	LuaScriptInterface::pushBoolean(L, isCheck);
+
+	return scriptInterface.callFunction(4);
+}
+
+void Events::eventPlayerOnDeEquip(Player* player, Item* item, slots_t slot)
+{
+	// Player:onDeEquip(item, slot)
+	if (info.playerOnDeEquip == -1) {
+		return;
+	}
+
+	if (!scriptInterface.reserveScriptEnv()) {
+		std::cout << "[Error - Events::eventPlayerOnDeEquip] Call stack overflow" << std::endl;
+		return;
+	}
+
+	ScriptEnvironment* env = scriptInterface.getScriptEnv();
+	env->setScriptId(info.playerOnDeEquip, &scriptInterface);
+
+	lua_State* L = scriptInterface.getLuaState();
+	scriptInterface.pushFunction(info.playerOnDeEquip);
+
+	LuaScriptInterface::pushUserdata<Player>(L, player);
+	LuaScriptInterface::setMetatable(L, -1, "Player");
+
+	LuaScriptInterface::pushUserdata<Item>(L, item);
+	LuaScriptInterface::setItemMetatable(L, -1, item);
+
+	lua_pushnumber(L, slot);
+
+	scriptInterface.callVoidFunction(3);
 }
 
 bool Events::eventPlayerOnMoveItem(Player* player, Item* item, uint16_t count, const Position& fromPosition, const Position& toPosition, Cylinder* fromCylinder, Cylinder* toCylinder)

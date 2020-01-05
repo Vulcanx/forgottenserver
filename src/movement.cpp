@@ -24,9 +24,11 @@
 #include "pugicast.h"
 
 #include "movement.h"
+#include "events.h"
 
 extern Game g_game;
 extern Vocations g_vocations;
+extern Events* g_events;
 
 MoveEvents::MoveEvents() :
 	scriptInterface("MoveEvents Interface")
@@ -433,6 +435,9 @@ uint32_t MoveEvents::onPlayerEquip(Player* player, Item* item, slots_t slot, boo
 	if (!moveEvent) {
 		return 1;
 	}
+	if (!g_events->eventPlayerOnEquip(player, item, slot, isCheck)) {
+		return 0;
+	}
 	return moveEvent->fireEquip(player, item, slot, isCheck);
 }
 
@@ -442,6 +447,7 @@ uint32_t MoveEvents::onPlayerDeEquip(Player* player, Item* item, slots_t slot)
 	if (!moveEvent) {
 		return 1;
 	}
+	g_events->eventPlayerOnDeEquip(player, item, slot);
 	return moveEvent->fireEquip(player, item, slot, false);
 }
 
