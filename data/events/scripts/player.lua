@@ -325,3 +325,7 @@ function Player:onWrapItem(item, position)
 		item:setAttribute("wrapid", oldId)
 	end
 end
+
+function Player:onFollowCreature(creature)
+	return true
+end

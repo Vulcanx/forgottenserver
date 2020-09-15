@@ -122,6 +122,8 @@ bool Events::load()
 				info.playerOnGainSkillTries = event;
 			} else if (methodName == "onWrapItem") {
 				info.playerOnWrapItem = event;
+			} else if (methodName == "onFollowCreature") {
+				info.playerOnFollowCreature = event;
 			} else {
 				std::cout << "[Warning - Events::load] Unknown player method: " << methodName << std::endl;
 			}
@@ -991,6 +993,30 @@ void Events::eventPlayerOnWrapItem(Player* player, Item* item)
 	LuaScriptInterface::setItemMetatable(L, -1, item);
 
 	scriptInterface.callVoidFunction(2);
+}
+
+bool Events::eventPlayerOnFollowCreature(Player* player, Creature* creature)
+{
+	// Player:onFollowCreature(creature)
+	if (info.playerOnFollowCreature == -1) {
+		return true;
+	}
+
+	if (!scriptInterface.reserveScriptEnv()) {
+		std::cout << "[Error - Events::eventPlayerOnFollowCreature] Call stack overflow" << std::endl;
+		return false;
+	}
+
+	ScriptEnvironment* env = scriptInterface.getScriptEnv();
+	env->setScriptId(info.playerOnFollowCreature, &scriptInterface);
+
+	lua_State* L = scriptInterface.getLuaState();
+	scriptInterface.pushFunction(info.playerOnFollowCreature);
+
+	LuaScriptInterface::pushUserdata<Player>(L, player);
+	LuaScriptInterface::pushUserdata<Creature>(L, creature);
+
+	return scriptInterface.callFunction(2);
 }
 
 void Events::eventMonsterOnDropLoot(Monster* monster, Container* corpse)
